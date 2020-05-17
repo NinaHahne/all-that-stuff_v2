@@ -1454,30 +1454,30 @@ function gameEnds(data) {
 }
 
 // §§ SOCKETS: *******************************************
-socket.on("disconnect", function() {
-  iGotDisconnected = true;
-  console.log("disconnected");
-  // setTimeout(() => {
-  //   window.alert(`you got disconnected!
-  //     please refresh the page to rejoin the game :)`);
-  // }, 200);
+// socket.on("disconnect", function() {
+//   iGotDisconnected = true;
+//   console.log("disconnected");
+//   // setTimeout(() => {
+//   //   window.alert(`you got disconnected!
+//   //     please refresh the page to rejoin the game :)`);
+//   // }, 200);
+//
+// });
 
-});
+// socket.on("reconnect", function() {
+//   console.log('reconnecting...');
+// });
 
-socket.on("reconnect", function() {
-  console.log('reconnecting...');
-});
-
-socket.on("connect", function() {
-  console.log('connecting...');
-  if (iGotDisconnected) {
-    // location.reload();
-    window.location.reload(false);
-    // setTimeout(() => {
-    //   window.location.reload(false);
-    // }, 500);
-  }
-});
+// socket.on("connect", function() {
+//   console.log('connecting...');
+//   if (iGotDisconnected) {
+//     // location.reload();
+//     window.location.reload(false);
+//     // setTimeout(() => {
+//     //   window.location.reload(false);
+//     // }, 500);
+//   }
+// });
 
 socket.on("welcome", function(data) {
   selectedPieceId = sessionStorage.getItem("selectedPieceId");
