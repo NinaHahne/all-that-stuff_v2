@@ -377,6 +377,11 @@ $(document).on("keydown", e => {
     // = "M"
     if (muted) {
       muted = false;
+      $("#muted").addClass("hidden");
+      $("#sound-on").removeClass("hidden");
+      setTimeout(() => {
+        $("#sound-on").addClass("hidden");
+      }, 2000);
       if (uniSound) {
         universalDropSound.play();
       } else {
@@ -384,6 +389,8 @@ $(document).on("keydown", e => {
       }
     } else {
       muted = true;
+      $("#sound-on").addClass("hidden");
+      $("#muted").removeClass("hidden");
     }
   } else if (e.keyCode == 13) {
     // = "ENTER"
@@ -438,6 +445,7 @@ $("#play-again-btn").on("click", () => window.location.reload(false));
 
 // §§ mouse & touch events listener functions ------------------------
 function handleMouseDown(e, touch) {
+  // TODO: socket.emit "object clicked" triggers function objectClicked(pieceId) in other sockets
   if (gameStarted && itsMyTurn && !doneBtnPressed) {
     if (touch) {
       e.preventDefault();
@@ -651,12 +659,6 @@ function setPlayerName() {
   try {
     myPlayerName = askForName();
     sessionStorage.setItem("myPlayerName", myPlayerName);
-    // console.log('myPlayerName in setPlayerName(): ', myPlayerName);
-
-    // do I need to take care of async behaviour here?
-    // setTimeout(() => {
-    //     alert(`Welcome to AllThatStuff, ${myPlayerName}. \nPlease pick a color!`);
-    // }, 200);
   } catch (err) {
     console.log(err);
     setTimeout(() => {
@@ -881,7 +883,7 @@ function startGame() {
   queuedObjects.reverse();
   $objects.append(activeObjects);
   $queue.append(queuedObjects);
-  getObjectPositions();
+  // getObjectPositions();
 
   let activeObjectsHTML = $("#objects")[0].innerHTML;
   let queuedObjectsHTML = $("#queue")[0].innerHTML;
@@ -899,7 +901,7 @@ function gameHasBeenStarted(data) {
     cancelAnimationFrame(myReq);
     $objects[0].innerHTML = data.activeObjects;
     $queue[0].innerHTML = data.queuedObjects;
-    getObjectPositions();
+    // getObjectPositions();
   }
   doneBtnPressed = false;
 
@@ -1329,7 +1331,7 @@ function updatePosition(e) {
   $clickedImgBox.css({
     transform: `translate(${moveX}px, ${moveY}px) rotate(${transformRotate}deg)`
   });
-
+  // TODO: instead of updateObjectsForOtherPlayers() socket.emit "object moved", triggers function objectMoved(pieceId, moveX, moveY, transformRotate) in other sockets
   updateObjectsForOtherPlayers();
 }
 
@@ -1348,6 +1350,7 @@ function rotateObject(direction) {
     $clickedImgBox.css({
       transform: `translate(${moveX}px, ${moveY}px) rotate(${transformRotate}deg)`
     });
+    // TODO: instead of updateObjectsForOtherPlayers() socket.emit "object moved", triggers function objectMoved(pieceId, moveX, moveY, transformRotate) in other sockets
     updateObjectsForOtherPlayers();
   }
 }

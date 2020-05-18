@@ -207,6 +207,15 @@ header {
   width: 20%;
 }
 
+#sound-on,
+#muted {
+  position: absolute;
+  height: 4vw;
+  bottom: 1vw;
+  left: 1vw;
+  z-index: 2000;
+}
+
 /* §§ ----------OBJECT TICKER------------------ */
 #ticker {
   position: fixed;
@@ -1073,6 +1082,7 @@ small {
 #queue .img-box {
   height: 90%;
   width: auto;
+  margin: 0;
   margin-left: 1.5%;
   z-index: 0;
 }
