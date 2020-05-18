@@ -431,7 +431,11 @@ io.on("connection", socket => {
     activeObjects = data.movedObjects;
     io.sockets.emit("objects are moving", {
       activePlayer: data.activePlayer,
-      movedObjects: data.movedObjects
+      movedObjects: data.movedObjects,
+      clickedImgId: data.clickedImgId,
+      moveXvw: data.moveXvw,
+      moveYvw: data.moveYvw,
+      transformRotate: data.transformRotate
     });
   });
 

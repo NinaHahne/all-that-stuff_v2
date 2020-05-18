@@ -85,6 +85,7 @@ const $instructions = $("#instructions");
 let [borderTop, borderBottom, borderLeft, borderRight] = get$objBorders(
   $constructionArea
 );
+let viewportWidth = window.innerWidth;
 
 const selectPlayersContainer = document.getElementById("select-players");
 const playButton = document.getElementById("play");
@@ -248,6 +249,8 @@ let startX;
 let startY;
 let moveX;
 let moveY;
+let moveXvw;
+let moveYvw;
 // let ignoreX = 0;
 // let ignoreY = 0;
 let translateX;
@@ -326,6 +329,8 @@ window.addEventListener("resize", () => {
   [borderTop, borderBottom, borderLeft, borderRight] = get$objBorders(
     $constructionArea
   );
+  viewportWidth = window.innerWidth;
+  // TODO: set objects to position relative to make them readjust to new objects container size and then getObjectPositions();
 });
 
 // touch events:
@@ -883,7 +888,6 @@ function startGame() {
   queuedObjects.reverse();
   $objects.append(activeObjects);
   $queue.append(queuedObjects);
-  // getObjectPositions();
 
   let activeObjectsHTML = $("#objects")[0].innerHTML;
   let queuedObjectsHTML = $("#queue")[0].innerHTML;
@@ -893,6 +897,8 @@ function startGame() {
     activeObjects: activeObjectsHTML,
     queuedObjects: queuedObjectsHTML
   });
+
+  getObjectPositions();
 }
 
 function gameHasBeenStarted(data) {
@@ -901,7 +907,7 @@ function gameHasBeenStarted(data) {
     cancelAnimationFrame(myReq);
     $objects[0].innerHTML = data.activeObjects;
     $queue[0].innerHTML = data.queuedObjects;
-    // getObjectPositions();
+    getObjectPositions();
   }
   doneBtnPressed = false;
 
@@ -1328,11 +1334,18 @@ function updatePosition(e) {
     moveY += translateY;
   }
 
+
   $clickedImgBox.css({
     transform: `translate(${moveX}px, ${moveY}px) rotate(${transformRotate}deg)`
   });
+
+  // transform px units in vw units:
+  moveXvw = (moveX * 100) / viewportWidth;
+  // console.log('moveXvw:', moveXvw);
+  moveYvw = (moveY * 100) / viewportWidth;
+  // console.log('moveYvw:', moveYvw);
   // TODO: instead of updateObjectsForOtherPlayers() socket.emit "object moved", triggers function objectMoved(pieceId, moveX, moveY, transformRotate) in other sockets
-  updateObjectsForOtherPlayers();
+  updateObjectsForOtherPlayers($clickedImgId, moveXvw, moveYvw, transformRotate);
 }
 
 function rotateObject(direction) {
@@ -1351,23 +1364,31 @@ function rotateObject(direction) {
       transform: `translate(${moveX}px, ${moveY}px) rotate(${transformRotate}deg)`
     });
     // TODO: instead of updateObjectsForOtherPlayers() socket.emit "object moved", triggers function objectMoved(pieceId, moveX, moveY, transformRotate) in other sockets
-    updateObjectsForOtherPlayers();
+    updateObjectsForOtherPlayers($clickedImgId, moveXvw, moveYvw, transformRotate);
   }
 }
 
-function updateObjectsForOtherPlayers() {
+function updateObjectsForOtherPlayers(clickedImgId, moveXvw, moveYvw, transformRotate) {
   // pass objects with new coordinates to all players:
   let activeObjectsHTML = $("#objects")[0].innerHTML;
 
   socket.emit("moving objects", {
     activePlayer: activePlayer,
-    movedObjects: activeObjectsHTML
+    movedObjects: activeObjectsHTML,
+    clickedImgId: clickedImgId,
+    moveXvw: moveXvw,
+    moveYvw: moveYvw,
+    transformRotate: transformRotate
   });
 }
 
 function objectsAreMoving(data) {
   if (!itsMyTurn) {
-    $objects[0].innerHTML = data.movedObjects;
+    // $objects[0].innerHTML = data.movedObjects;
+    // TODO: remember start position?
+    $(`.img-box.${data.clickedImgId}`).css({
+      transform: `translate(${data.moveXvw}vw, ${data.moveYvw}vw) rotate(${data.transformRotate}deg)`
+    });
   }
 }
 
