@@ -249,6 +249,7 @@ let startX;
 let startY;
 let moveX;
 let moveY;
+
 let moveXvw;
 let moveYvw;
 // let ignoreX = 0;
@@ -276,7 +277,7 @@ let muted = false;
 // §§ PREPARATION ************************************************
 
 shuffleObjects(objects);
-moveObjects();
+moveTickerObjects();
 preloadObjectImages();
 
 // §§ EVENT LISTENERS: *******************************************
@@ -331,10 +332,10 @@ window.addEventListener("resize", () => {
   );
   viewportWidth = window.innerWidth;
   // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with getObjectPositions():
-  $objects.children(".img-box").css({
-    position: "unset"
-  });
-  getObjectPositions();
+  // $objects.children(".img-box").css({
+  //   position: "unset"
+  // });
+  // getObjectPositions();
 });
 
 // touch events:
@@ -432,7 +433,7 @@ $(document).on("dblclick", ".img-box", e => {
   if (gameStarted && itsMyTurn) {
     let imgBox = e.currentTarget;
     changeObjectImage(imgBox);
-    updateObjectsForOtherPlayers();
+    // moveObjects();
   }
 });
 
@@ -454,7 +455,6 @@ $("#play-again-btn").on("click", () => window.location.reload(false));
 
 // §§ mouse & touch events listener functions ------------------------
 function handleMouseDown(e, touch) {
-  // TODO: socket.emit "object clicked" triggers function objectClicked(pieceId) in other sockets
   if (gameStarted && itsMyTurn && !doneBtnPressed) {
     if (touch) {
       e.preventDefault();
@@ -550,6 +550,7 @@ function handleMouseUp(e, touch) {
         new Audio("./sounds/" + currentObj.sound).play();
       }
     }
+    let selected;
     //only if object is dropped (when cursor is) inside the construction area:
     if (
       borderLeft < posX &&
@@ -558,10 +559,12 @@ function handleMouseUp(e, touch) {
       posY < borderBottom
     ) {
       $clickedImgBox.addClass("selected");
+      selected = true;
       // if dropped ouside construction area, put it back to it's original position:
     } else {
       $clickedImgBox.removeClass("selected");
-      // reset object position::
+      selected = false;
+      // reset object position:
       $clickedImgBox.css({
         transform: `translate(${0}px, ${0}px)`,
         "z-index": 1
@@ -571,7 +574,12 @@ function handleMouseUp(e, touch) {
     $clickedImgBox.removeClass("move");
     objectClicked = false;
     objectMoved = false;
-    updateObjectsForOtherPlayers();
+    // moveObjects();
+    socket.emit("dropping object", {
+      activePlayer: activePlayer,
+      clickedImgId: $clickedImgId,
+      selected: selected
+    });
   }
 }
 
@@ -611,7 +619,7 @@ function shuffleObjects(objects) {
 }
 
 // move ticker objects in start menu:
-function moveObjects() {
+function moveTickerObjects() {
   // left = left - 2;
   left--;
   // console.log(left);
@@ -624,7 +632,7 @@ function moveObjects() {
     // make first link the last link
     objects.appendChild(objectList[0]); //appending will actually remove it from the start and add it to the end
   }
-  myReq = requestAnimationFrame(moveObjects); //like setTimeout, but the waiting time is adjusted to the framerate of used hardware(?)
+  myReq = requestAnimationFrame(moveTickerObjects); //like setTimeout, but the waiting time is adjusted to the framerate of used hardware(?)
   objects.style.left = left + "px";
 }
 
@@ -1258,6 +1266,14 @@ function changeObjectImage(imgBox) {
           .addClass("v1");
       }
     }
+  // TODO: socket emit "changed object image"
+  // FIXME: 
+    socket.emit("changed object image", {
+      activePlayer: activePlayer,
+      clickedImgId: $clickedImgId,
+      selected: selected
+    });
+
   } else {
     console.log("this object has only one image!");
   }
@@ -1338,7 +1354,6 @@ function updatePosition(e) {
     moveY += translateY;
   }
 
-
   $clickedImgBox.css({
     transform: `translate(${moveX}px, ${moveY}px) rotate(${transformRotate}deg)`
   });
@@ -1348,8 +1363,7 @@ function updatePosition(e) {
   // console.log('moveXvw:', moveXvw);
   moveYvw = (moveY * 100) / viewportWidth;
   // console.log('moveYvw:', moveYvw);
-  // TODO: instead of updateObjectsForOtherPlayers() socket.emit "object moved", triggers function objectMoved(pieceId, moveX, moveY, transformRotate) in other sockets
-  updateObjectsForOtherPlayers($clickedImgId, moveXvw, moveYvw, transformRotate);
+  moveObjects($clickedImgId, moveXvw, moveYvw, transformRotate);
 }
 
 function rotateObject(direction) {
@@ -1367,12 +1381,11 @@ function rotateObject(direction) {
     $clickedImgBox.css({
       transform: `translate(${moveX}px, ${moveY}px) rotate(${transformRotate}deg)`
     });
-    // TODO: instead of updateObjectsForOtherPlayers() socket.emit "object moved", triggers function objectMoved(pieceId, moveX, moveY, transformRotate) in other sockets
-    updateObjectsForOtherPlayers($clickedImgId, moveXvw, moveYvw, transformRotate);
+    moveObjects($clickedImgId, moveXvw, moveYvw, transformRotate);
   }
 }
 
-function updateObjectsForOtherPlayers(clickedImgId, moveXvw, moveYvw, transformRotate) {
+function moveObjects(clickedImgId, moveXvw, moveYvw, transformRotate) {
   // pass objects with new coordinates to all players:
   let activeObjectsHTML = $("#objects")[0].innerHTML;
 
@@ -1389,10 +1402,26 @@ function updateObjectsForOtherPlayers(clickedImgId, moveXvw, moveYvw, transformR
 function objectsAreMoving(data) {
   if (!itsMyTurn) {
     // $objects[0].innerHTML = data.movedObjects;
-    // TODO: remember start position?
+
+    // move or rotate object:
     $(`.img-box.${data.clickedImgId}`).css({
       transform: `translate(${data.moveXvw}vw, ${data.moveYvw}vw) rotate(${data.transformRotate}deg)`
     });
+  }
+}
+
+function objectDropped(data) {
+  if (!itsMyTurn) {
+    if (data.selected) {
+      $(`.img-box.${data.clickedImgId}`).addClass('selected');
+    } else {
+      // reset object position:
+      $(`.img-box.${data.clickedImgId}`).removeClass('selected');
+      $(`.img-box.${data.clickedImgId}`).css({
+        transform: `translate(${0}px, ${0}px)`,
+        "z-index": 1
+      });
+    }
   }
 }
 
@@ -1623,6 +1652,10 @@ socket.on("next turn", function(data) {
 
 socket.on("objects are moving", function(data) {
   objectsAreMoving(data);
+});
+
+socket.on("object dropped", function(data) {
+  objectDropped(data);
 });
 
 socket.on("building is done", function(data) {

@@ -439,6 +439,14 @@ io.on("connection", socket => {
     });
   });
 
+  socket.on("dropping object", data => {
+    io.sockets.emit("object dropped", {
+      activePlayer: data.activePlayer,
+      clickedImgId: data.clickedImgId,
+      selected: data.selected
+    });
+  });
+
   socket.on("made a guess", data => {
     collectGuesses(data);
   });
