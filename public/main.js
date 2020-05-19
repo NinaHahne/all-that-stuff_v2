@@ -330,7 +330,11 @@ window.addEventListener("resize", () => {
     $constructionArea
   );
   viewportWidth = window.innerWidth;
-  // TODO: set objects to position relative to make them readjust to new objects container size and then getObjectPositions();
+  // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with getObjectPositions():
+  $objects.children(".img-box").css({
+    position: "unset"
+  });
+  getObjectPositions();
 });
 
 // touch events:
