@@ -238,7 +238,6 @@ let dataForNextTurn;
 //     playersObj = sessionStorage.getItem("playersObj");
 // }
 
-
 // §§ GLOBAL VARIABLES for moving/drag&drop objects: --------------------------
 let objectClicked = false;
 let objectMoved = false;
@@ -475,19 +474,9 @@ function handleMouseDown(e, touch) {
     // start position if mouse event || touch event:
     startX = e.clientX || e.touches[0].clientX;
     startY = e.clientY || e.touches[0].clientY;
-    // console.log('startX in handleMouseDown: ', startX);
+
     // get the clicked object to the very front:
-    // https://stackoverflow.com/questions/5680770/how-to-find-the-highest-z-index-using-jquery
-    let highestZIndex = 1;
-    $(".selected").each(function() {
-      const currentZIndex = Number($(this).css("z-index"));
-      if (currentZIndex > highestZIndex) {
-        highestZIndex = currentZIndex;
-      }
-    });
-    $clickedImgBox.css({
-      "z-index": highestZIndex + 1
-    });
+    pullToFront($clickedImgBox);
 
     //  https://css-tricks.com/get-value-of-css-rotation-through-javascript/
 
@@ -754,7 +743,9 @@ function addPlayerMidGame(data) {
   if (data.selectedPieceId == selectedPieceId) {
     gameStarted = true;
 
-    $("#start-menu").find("#" + data.selectedPieceId).addClass("selectedPlayerPiece");
+    $("#start-menu")
+      .find("#" + data.selectedPieceId)
+      .addClass("selectedPlayerPiece");
 
     cancelAnimationFrame(myReq);
 
@@ -940,7 +931,9 @@ function gameHasBeenStarted(data) {
   let currentTurn = numberOfTurns - data.numberOfTurnsLeft + 1;
   $rounds[0].innerText = `${currentTurn}/${numberOfTurns}`;
 
-  let joinedPlayersList = selectPlayersContainer.getElementsByClassName("selectedPlayerPiece");
+  let joinedPlayersList = selectPlayersContainer.getElementsByClassName(
+    "selectedPlayerPiece"
+  );
   let playerArray = Array.from(joinedPlayersList);
   $joinedPlayersContainer.append(playerArray);
 
@@ -954,7 +947,6 @@ function gameHasBeenStarted(data) {
     $message[0].innerText = "...under construction...";
 
     $("#done-btn").addClass("hidden");
-
   } else if (data.startPlayer == selectedPieceId) {
     itsMyTurn = true;
 
@@ -1037,83 +1029,6 @@ function getObjectPositions() {
   });
 }
 
-function changeTurn(data) {
-  $(`#${data.activePlayer}`).removeClass("myTurn");
-  $("#construction-area").removeClass(data.activePlayer);
-
-  $(`#${data.nextPlayer}`).addClass("myTurn");
-  $("#construction-area").addClass(data.nextPlayer);
-
-  $(`.highlight[key=${correctAnswer}]`).removeClass(activePlayer);
-
-  // reset guess markers:
-  let $guessesBoxesList = $(`.table-row`).find(".guesses");
-  for (let i = 0; i < $guessesBoxesList.length; i++) {
-    $guessesBoxesList[i].innerHTML = "";
-  }
-
-  // create "points if correct" boxes:
-  // reset from previous game:
-  resetPointsIfCorrect();
-
-  // $("#points-if-correct")[0].innerHTML = "";
-  // let highestAchievablePoint = players.length - 1;
-  // for (let i = highestAchievablePoint; i > 0; i--) {
-  //   let points = i;
-  //   if (i > 5) {
-  //     points = 5;
-  //   }
-  //   let elem = `<div class="points">${points}</div>`;
-  //   $("#points-if-correct").append(elem);
-  // }
-
-  activePlayer = data.nextPlayer;
-  correctAnswer = data.correctAnswer;
-  myGuess = "";
-  doneBtnPressed = false;
-
-  $objects[0].innerHTML = data.activeObjects;
-  $queue[0].innerHTML = data.queuedObjects;
-
-  getObjectPositions();
-
-  // new word card:
-  cardTitle[0].innerHTML = data.newCard.title;
-  let cardItems = data.newCard.items;
-  for (let i = 0; i < cardItems.length; i++) {
-    items[i].innerHTML = cardItems[i];
-  }
-
-  $message.removeClass("hidden");
-  $message.removeClass("done");
-  $("#next-btn").addClass("hidden");
-
-  let currentTurn = numberOfTurns - data.numberOfTurnsLeft + 1;
-  $rounds[0].innerText = `${currentTurn}/${numberOfTurns}`;
-
-  // if next turn is my turn:
-  if (data.nextPlayer == selectedPieceId) {
-    console.log(`you drew card number ${data.newCard.id}.`);
-    console.log(`please build item number ${data.correctAnswer}`);
-    $(`.highlight[key=${data.correctAnswer}]`).addClass(selectedPieceId);
-    $("#done-btn").removeClass("hidden");
-    $message[0].innerText = `it's your turn!`;
-    $message.addClass("bold");
-    itsMyTurn = true;
-  } else {
-    // if next turn is not my turn:
-    $("#done-btn").addClass("hidden");
-    $message.removeClass("bold");
-    $message[0].innerText = "...under construction...";
-    itsMyTurn = false;
-  }
-  // sessionStorage.setItem("itsMyTurn", itsMyTurn);
-
-  if (!muted) {
-    startGong.play();
-  }
-}
-
 function resetPointsIfCorrect() {
   $("#points-if-correct")[0].innerHTML = "";
   let highestAchievablePoint = players.length - 1;
@@ -1127,221 +1042,12 @@ function resetPointsIfCorrect() {
   }
 }
 
-function someOneGuessed(data) {
-  // console.log("someone guessed");
-  let $highestFreePointBox = $("#points-if-correct")
-    .children()
-    .not(".claimed")
-    .first();
-  // console.log('highestFreePointBox:', $highestFreePointBox);
-  $highestFreePointBox.addClass(`claimed ${data.guessingPlayer}`);
-  backupGuesses();
-
-  if (!muted) {
-    plop.play();
-  }
-}
-
-function showAnswers(data) {
-  // console.log("guessed answers: ", data.guessedAnswers);
-  // console.log("playerPointsIfCorrect: ", data.playerPointsIfCorrect);
-  // console.log("actualPlayerPoints: ", data.actualPlayerPoints);
-  // console.log("playerPointsTotal: ", data.playerPointsTotal);
-  if (!itsMyTurn) {
-    $(`.highlight[key=${myGuess}]`).removeClass(selectedPieceId);
-  }
-  // show answers of all guessers:
-  for (let player in data.guessedAnswers) {
-    let $guessesBoxInCardItem = $(
-      `.table-row[key=${data.guessedAnswers[player]}]`
-    ).find(".guesses");
-
-    let newGuess = `<div class="guess ${player}"></div>`;
-
-    $guessesBoxInCardItem.append(newGuess);
-    // empty guesses div for next turn.... also for startGame?
-  }
-  backupGuesses();
-
-  if (!muted) {
-    // pop sound for displaying all answers:
-    plop.play();
-    // drumroll until showCorrectAnswer:
-    // adding 700ms..
-    setTimeout(() => {
-      drumroll.play();
-    }, 700);
-  }
-}
-
-function showCorrectAnswer(data) {
-  // show correct answer:
-  $(`.highlight[key=${data.correctAnswer}]`).addClass(activePlayer);
-  backupGuesses();
-}
-
-function backupGuesses() {
-  // save status of guesses in case someone disconnects/reconnects:
-  if (iAmTheGameMaster) {
-    let cardPointsHTML = $("#card-points")[0].innerHTML;
-
-    socket.emit("guesses backup", {
-      cardPointsHTML: cardPointsHTML
-    });
-  }
-}
-
-function flashPoints($playerPoints) {
-  $playerPoints.css({
-    transform: `scale(1.2)`
-  });
-  setTimeout(function() {
-    $playerPoints.css({
-      transform: `scale(1)`
-    });
-  }, 350);
-}
-
-function addPoints(data) {
-  for (let player in data.playerPointsTotal) {
-    let $piece = $("#" + player);
-    let $playerPoints = $piece.find(".player-points");
-    $playerPoints[0].innerText = data.playerPointsTotal[player];
-    flashPoints($playerPoints);
-
-    if (player == selectedPieceId) {
-      myTotalPoints = data.playerPointsTotal[player];
-      sessionStorage.setItem("myTotalPoints", data.playerPointsTotal[player]);
-    }
-  }
-
-  if (!muted) {
-    bubblePop1.play();
-  }
-}
-
 function toggleHelp() {
   if ($instructions.hasClass("hidden")) {
     $instructions.removeClass("hidden");
   } else {
     $instructions.addClass("hidden");
   }
-}
-
-function changeObjectImage(imgBox) {
-  if (!$(imgBox).hasClass("only1")) {
-    // console.log('more than one image!');
-    const img = imgBox.querySelector("img");
-    // console.log(img.id);
-    const fileName = img.src.split("objects/")[1];
-    const projectPath = "/objects/" + fileName;
-    const srcNameV = projectPath.split(".png")[0];
-    const newSrcBase = srcNameV.substring(0, srcNameV.length - 1);
-    // console.log('active image version: ', srcNameV[srcNameV.length - 1]);
-    let newPicSrc;
-    let removeClass;
-    let addClass;
-    if ($(imgBox).hasClass("more2")) {
-      if ($(imgBox).hasClass("v1")) {
-        img.src = newSrcBase + 2 + ".png";
-        newPicSrc = newSrcBase + 2 + ".png";
-        $(imgBox)
-          .removeClass("v1")
-          .addClass("v2");
-        removeClass = "v1";
-        addClass = "v2";
-      } else if ($(imgBox).hasClass("v2")) {
-        img.src = newSrcBase + 1 + ".png";
-        newPicSrc = newSrcBase + 1 + ".png";
-        $(imgBox)
-          .removeClass("v2")
-          .addClass("v1");
-        removeClass = "v2";
-        addClass = "v1";
-      }
-    } else if ($(imgBox).hasClass("more3")) {
-      if ($(imgBox).hasClass("v1")) {
-        img.src = newSrcBase + 2 + ".png";
-        newPicSrc = newSrcBase + 2 + ".png";
-        $(imgBox)
-          .removeClass("v1")
-          .addClass("v2");
-        removeClass = "v1";
-        addClass = "v2";
-      } else if ($(imgBox).hasClass("v2")) {
-        img.src = newSrcBase + 3 + ".png";
-        newPicSrc = newSrcBase + 3 + ".png";
-        $(imgBox)
-          .removeClass("v2")
-          .addClass("v3");
-        removeClass = "v2";
-        addClass = "v3";
-      } else if ($(imgBox).hasClass("v3")) {
-        img.src = newSrcBase + 1 + ".png";
-        newPicSrc = newSrcBase + 1 + ".png";
-        $(imgBox)
-          .removeClass("v3")
-          .addClass("v1");
-        removeClass = "v3";
-        addClass = "v1";
-      }
-    }
-    console.log('newPicSrc:', newPicSrc);
-    socket.emit("changed object image", {
-      clickedImgId: $clickedImgId,
-      newPicSrc: newPicSrc,
-      removeClass: removeClass,
-      addClass: addClass
-    });
-
-  } else {
-    console.log("this object has only one image!");
-  }
-}
-
-function objectImageChanged(data) {
-  if (!itsMyTurn) {
-    const $img = $('#objects').find(`#${data.clickedImgId}`);
-    // console.log('$img.attr("src"):', $img.attr("src"));
-
-    $img.attr("src", data.newPicSrc);
-    $(`.img-box.${data.clickedImgId}`)
-      .removeClass(data.removeClass)
-      .addClass(data.addClass);
-  }
-}
-
-function discardAndRefillObjects(data) {
-  const numberOfUsedObjects = $(".selected").length;
-  // console.log($queue.children().last().attr("class"));
-  $objects.children(".img-box").css({
-    position: "unset"
-  });
-  $(".selected").each(function() {
-    $queue.prepend($(this));
-    $(this).removeClass("selected");
-    $(this).css({
-      position: "unset",
-      transform: `translate(${0}px, ${0}px)`,
-      "z-index": 1
-    });
-  });
-  for (let i = 0; i < numberOfUsedObjects; i++) {
-    // console.log($queue.children().last().attr("class"));
-    $objects.append($queue.children().last());
-  }
-
-  if (data.activePlayer == selectedPieceId) {
-    // console.log("it was my turn!");
-    let activeObjectsHTML = $("#objects")[0].innerHTML;
-    let queuedObjectsHTML = $("#queue")[0].innerHTML;
-    socket.emit("objects for next turn", {
-      activePlayer: data.activePlayer,
-      activeObjects: activeObjectsHTML,
-      queuedObjects: queuedObjectsHTML
-    });
-  }
-  getObjectPositions();
 }
 
 // drag&drop objects in main game:
@@ -1440,17 +1146,20 @@ function objectsAreMoving(data) {
       transform: `translate(${data.moveXvw}vw, ${data.moveYvw}vw) rotate(${data.transformRotate}deg)`
     });
 
-    // TODO: change z-index of moved objects
+    // bring recently moved objects to the front:
+    pullToFront($(`.img-box.${data.clickedImgId}`));
   }
 }
 
-function objectDropped(data) {
+function objectIsDropped(data) {
   if (!itsMyTurn) {
     if (data.selected) {
-      $(`.img-box.${data.clickedImgId}`).addClass('selected');
+      // bring recently dropped objects to the front:
+      pullToFront($(`.img-box.${data.clickedImgId}`));
+      $(`.img-box.${data.clickedImgId}`).addClass("selected");
     } else {
       // reset object position:
-      $(`.img-box.${data.clickedImgId}`).removeClass('selected');
+      $(`.img-box.${data.clickedImgId}`).removeClass("selected");
       $(`.img-box.${data.clickedImgId}`).css({
         transform: `translate(${0}px, ${0}px)`,
         "z-index": 1
@@ -1459,13 +1168,110 @@ function objectDropped(data) {
   }
 }
 
+function pullToFront($imgBox) {
+  let highestZIndex = 1;
+  $(".selected").each(function() {
+    const currentZIndex = Number($(this).css("z-index"));
+    if (currentZIndex > highestZIndex) {
+      highestZIndex = currentZIndex;
+    }
+  });
+  $imgBox.css({
+    "z-index": highestZIndex + 1
+  });
+}
+
+function changeObjectImage(imgBox) {
+  if (!$(imgBox).hasClass("only1")) {
+    // console.log('more than one image!');
+    const img = imgBox.querySelector("img");
+    // console.log(img.id);
+    const fileName = img.src.split("objects/")[1];
+    const projectPath = "/objects/" + fileName;
+    const srcNameV = projectPath.split(".png")[0];
+    const newSrcBase = srcNameV.substring(0, srcNameV.length - 1);
+    // console.log('active image version: ', srcNameV[srcNameV.length - 1]);
+    let newPicSrc;
+    let removeClass;
+    let addClass;
+    if ($(imgBox).hasClass("more2")) {
+      if ($(imgBox).hasClass("v1")) {
+        img.src = newSrcBase + 2 + ".png";
+        newPicSrc = newSrcBase + 2 + ".png";
+        $(imgBox)
+          .removeClass("v1")
+          .addClass("v2");
+        removeClass = "v1";
+        addClass = "v2";
+      } else if ($(imgBox).hasClass("v2")) {
+        img.src = newSrcBase + 1 + ".png";
+        newPicSrc = newSrcBase + 1 + ".png";
+        $(imgBox)
+          .removeClass("v2")
+          .addClass("v1");
+        removeClass = "v2";
+        addClass = "v1";
+      }
+    } else if ($(imgBox).hasClass("more3")) {
+      if ($(imgBox).hasClass("v1")) {
+        img.src = newSrcBase + 2 + ".png";
+        newPicSrc = newSrcBase + 2 + ".png";
+        $(imgBox)
+          .removeClass("v1")
+          .addClass("v2");
+        removeClass = "v1";
+        addClass = "v2";
+      } else if ($(imgBox).hasClass("v2")) {
+        img.src = newSrcBase + 3 + ".png";
+        newPicSrc = newSrcBase + 3 + ".png";
+        $(imgBox)
+          .removeClass("v2")
+          .addClass("v3");
+        removeClass = "v2";
+        addClass = "v3";
+      } else if ($(imgBox).hasClass("v3")) {
+        img.src = newSrcBase + 1 + ".png";
+        newPicSrc = newSrcBase + 1 + ".png";
+        $(imgBox)
+          .removeClass("v3")
+          .addClass("v1");
+        removeClass = "v3";
+        addClass = "v1";
+      }
+    }
+    console.log("newPicSrc:", newPicSrc);
+    socket.emit("changed object image", {
+      clickedImgId: $clickedImgId,
+      newPicSrc: newPicSrc,
+      removeClass: removeClass,
+      addClass: addClass
+    });
+  } else {
+    console.log("this object has only one image!");
+  }
+}
+
+function objectImageChanged(data) {
+  if (!itsMyTurn) {
+    const $img = $("#objects").find(`#${data.clickedImgId}`);
+    // console.log('$img.attr("src"):', $img.attr("src"));
+
+    $img.attr("src", data.newPicSrc);
+    $(`.img-box.${data.clickedImgId}`)
+      .removeClass(data.removeClass)
+      .addClass(data.addClass);
+  }
+}
+
 function doneBuilding() {
-  let $selectedObjects = $("#objects").find('.selected');
+  let $selectedObjects = $("#objects").find(".selected");
 
   // check if there is at least 1 object in the construction area:
   if ($selectedObjects.length > 0) {
     let activeObjectsHTML = $("#objects")[0].innerHTML;
     // console.log(activeObjectsHTML);
+
+    // TODO: In case someone resized their window during the building, the position of objects in the construction area could be a bit off on their screen. so to make sure, they see exactly what the builder built, send coordinates of selected objects again...
 
     socket.emit("done building", {
       activePlayer: activePlayer,
@@ -1506,8 +1312,217 @@ function guessWordFromCard(e) {
   }
 }
 
+function someOneGuessed(data) {
+  // console.log("someone guessed");
+  let $highestFreePointBox = $("#points-if-correct")
+    .children()
+    .not(".claimed")
+    .first();
+  // console.log('highestFreePointBox:', $highestFreePointBox);
+  $highestFreePointBox.addClass(`claimed ${data.guessingPlayer}`);
+  backupGuesses();
+
+  if (!muted) {
+    plop.play();
+  }
+}
+
+function backupGuesses() {
+  // save status of guesses in case someone disconnects/reconnects:
+  if (iAmTheGameMaster) {
+    let cardPointsHTML = $("#card-points")[0].innerHTML;
+
+    socket.emit("guesses backup", {
+      cardPointsHTML: cardPointsHTML
+    });
+  }
+}
+
+function showAnswers(data) {
+  // console.log("guessed answers: ", data.guessedAnswers);
+  // console.log("playerPointsIfCorrect: ", data.playerPointsIfCorrect);
+  // console.log("actualPlayerPoints: ", data.actualPlayerPoints);
+  // console.log("playerPointsTotal: ", data.playerPointsTotal);
+  if (!itsMyTurn) {
+    $(`.highlight[key=${myGuess}]`).removeClass(selectedPieceId);
+  }
+  // show answers of all guessers:
+  for (let player in data.guessedAnswers) {
+    let $guessesBoxInCardItem = $(
+      `.table-row[key=${data.guessedAnswers[player]}]`
+    ).find(".guesses");
+
+    let newGuess = `<div class="guess ${player}"></div>`;
+
+    $guessesBoxInCardItem.append(newGuess);
+    // empty guesses div for next turn.... also for startGame?
+  }
+  backupGuesses();
+
+  if (!muted) {
+    // pop sound for displaying all answers:
+    plop.play();
+    // drumroll until showCorrectAnswer:
+    // adding 700ms..
+    setTimeout(() => {
+      drumroll.play();
+    }, 700);
+  }
+}
+
+function showCorrectAnswer(data) {
+  // show correct answer:
+  $(`.highlight[key=${data.correctAnswer}]`).addClass(activePlayer);
+  backupGuesses();
+}
+
+function addPoints(data) {
+  for (let player in data.playerPointsTotal) {
+    let $piece = $("#" + player);
+    let $playerPoints = $piece.find(".player-points");
+    $playerPoints[0].innerText = data.playerPointsTotal[player];
+    flashPoints($playerPoints);
+
+    if (player == selectedPieceId) {
+      myTotalPoints = data.playerPointsTotal[player];
+      sessionStorage.setItem("myTotalPoints", data.playerPointsTotal[player]);
+    }
+  }
+
+  if (!muted) {
+    bubblePop1.play();
+  }
+}
+
+function flashPoints($playerPoints) {
+  $playerPoints.css({
+    transform: `scale(1.2)`
+  });
+  setTimeout(function() {
+    $playerPoints.css({
+      transform: `scale(1)`
+    });
+  }, 350);
+}
+
 function readyForNextTurn() {
   socket.emit("ready for next turn");
+}
+
+function discardAndRefillObjects(data) {
+  const numberOfUsedObjects = $(".selected").length;
+  // console.log($queue.children().last().attr("class"));
+  $objects.children(".img-box").css({
+    position: "unset"
+  });
+  $(".selected").each(function() {
+    $queue.prepend($(this));
+    $(this).removeClass("selected");
+    $(this).css({
+      position: "unset",
+      transform: `translate(${0}px, ${0}px)`,
+      "z-index": 1
+    });
+  });
+  for (let i = 0; i < numberOfUsedObjects; i++) {
+    // console.log($queue.children().last().attr("class"));
+
+    // used together with flex wrap in #objects:
+    // $objects.append($queue.children().last());
+    
+    // used together with flex wrap-reverse in #objects:
+    $objects.prepend($queue.children().last());
+  }
+
+  if (data.activePlayer == selectedPieceId) {
+    // console.log("it was my turn!");
+    let activeObjectsHTML = $("#objects")[0].innerHTML;
+    let queuedObjectsHTML = $("#queue")[0].innerHTML;
+    socket.emit("objects for next turn", {
+      activePlayer: data.activePlayer,
+      activeObjects: activeObjectsHTML,
+      queuedObjects: queuedObjectsHTML
+    });
+  }
+  // TODO: reset object images to v1
+  getObjectPositions();
+}
+
+function changeTurn(data) {
+  $(`#${data.activePlayer}`).removeClass("myTurn");
+  $("#construction-area").removeClass(data.activePlayer);
+
+  $(`#${data.nextPlayer}`).addClass("myTurn");
+  $("#construction-area").addClass(data.nextPlayer);
+
+  $(`.highlight[key=${correctAnswer}]`).removeClass(activePlayer);
+
+  // reset guess markers:
+  let $guessesBoxesList = $(`.table-row`).find(".guesses");
+  for (let i = 0; i < $guessesBoxesList.length; i++) {
+    $guessesBoxesList[i].innerHTML = "";
+  }
+
+  // create "points if correct" boxes:
+  // reset from previous game:
+  resetPointsIfCorrect();
+
+  // $("#points-if-correct")[0].innerHTML = "";
+  // let highestAchievablePoint = players.length - 1;
+  // for (let i = highestAchievablePoint; i > 0; i--) {
+  //   let points = i;
+  //   if (i > 5) {
+  //     points = 5;
+  //   }
+  //   let elem = `<div class="points">${points}</div>`;
+  //   $("#points-if-correct").append(elem);
+  // }
+
+  activePlayer = data.nextPlayer;
+  correctAnswer = data.correctAnswer;
+  myGuess = "";
+  doneBtnPressed = false;
+
+  $objects[0].innerHTML = data.activeObjects;
+  $queue[0].innerHTML = data.queuedObjects;
+
+  getObjectPositions();
+
+  // new word card:
+  cardTitle[0].innerHTML = data.newCard.title;
+  let cardItems = data.newCard.items;
+  for (let i = 0; i < cardItems.length; i++) {
+    items[i].innerHTML = cardItems[i];
+  }
+
+  $message.removeClass("hidden");
+  $message.removeClass("done");
+  $("#next-btn").addClass("hidden");
+
+  let currentTurn = numberOfTurns - data.numberOfTurnsLeft + 1;
+  $rounds[0].innerText = `${currentTurn}/${numberOfTurns}`;
+
+  // if next turn is my turn:
+  if (data.nextPlayer == selectedPieceId) {
+    console.log(`you drew card number ${data.newCard.id}.`);
+    console.log(`please build item number ${data.correctAnswer}`);
+    $(`.highlight[key=${data.correctAnswer}]`).addClass(selectedPieceId);
+    $("#done-btn").removeClass("hidden");
+    $message[0].innerText = `it's your turn!`;
+    $message.addClass("bold");
+    itsMyTurn = true;
+  } else {
+    // if next turn is not my turn:
+    $("#done-btn").addClass("hidden");
+    $message.removeClass("bold");
+    $message[0].innerText = "...under construction...";
+    itsMyTurn = false;
+  }
+  // sessionStorage.setItem("itsMyTurn", itsMyTurn);
+
+  if (!muted) {
+    startGong.play();
+  }
 }
 
 function endGame() {
@@ -1599,7 +1614,6 @@ socket.on("welcome", function(data) {
       // TODO In case of a replay, I should also check here, if the selected piece has been taken by a new player in the meantime....
       selectedPiece(selectedPieceId);
     }
-
   } else {
     // if the game has already started:
     if (selectedPieceId && myPlayerName) {
@@ -1609,7 +1623,6 @@ socket.on("welcome", function(data) {
         playerName: myPlayerName,
         myTotalPoints: myTotalPoints
       });
-
     } else {
       // if the player is new player and didn't join the game before
       setTimeout(() => {
@@ -1648,7 +1661,9 @@ socket.on("add selected piece", function(data) {
     iAmTheGameMaster = true;
     console.log("you are the game master");
     $("#chosen-language").addClass("game-master");
-    $("#chosen-language").find('.crown').removeClass('hidden');
+    $("#chosen-language")
+      .find(".crown")
+      .removeClass("hidden");
 
     let $buttonBox = $("#logo-button-box").find(".buttonBox");
     $buttonBox.removeClass("hidden");
@@ -1689,7 +1704,7 @@ socket.on("objects are moving", function(data) {
 });
 
 socket.on("object dropped", function(data) {
-  objectDropped(data);
+  objectIsDropped(data);
 });
 
 socket.on("object image changed", function(data) {
@@ -1726,7 +1741,6 @@ socket.on("everyone guessed", function(data) {
           $message[0].innerText = "discussion time!";
 
           // discardAndRefillObjects(data);
-
         }, 1000); // time before change to next turn / next-button shows up
       }, 1500); // time before addPoints
     }, 1500); // time before showCorrectAnswer
