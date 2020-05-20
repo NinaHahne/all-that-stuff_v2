@@ -1075,6 +1075,8 @@ function changeTurn(data) {
   $objects[0].innerHTML = data.activeObjects;
   $queue[0].innerHTML = data.queuedObjects;
 
+  getObjectPositions();
+
   // new word card:
   cardTitle[0].innerHTML = data.newCard.title;
   let cardItems = data.newCard.items;
@@ -1236,46 +1238,76 @@ function changeObjectImage(imgBox) {
     const srcNameV = projectPath.split(".png")[0];
     const newSrcBase = srcNameV.substring(0, srcNameV.length - 1);
     // console.log('active image version: ', srcNameV[srcNameV.length - 1]);
+    let newPicSrc;
+    let removeClass;
+    let addClass;
     if ($(imgBox).hasClass("more2")) {
       if ($(imgBox).hasClass("v1")) {
         img.src = newSrcBase + 2 + ".png";
+        newPicSrc = newSrcBase + 2 + ".png";
         $(imgBox)
           .removeClass("v1")
           .addClass("v2");
+        removeClass = "v1";
+        addClass = "v2";
       } else if ($(imgBox).hasClass("v2")) {
         img.src = newSrcBase + 1 + ".png";
+        newPicSrc = newSrcBase + 1 + ".png";
         $(imgBox)
           .removeClass("v2")
           .addClass("v1");
+        removeClass = "v2";
+        addClass = "v1";
       }
     } else if ($(imgBox).hasClass("more3")) {
       if ($(imgBox).hasClass("v1")) {
         img.src = newSrcBase + 2 + ".png";
+        newPicSrc = newSrcBase + 2 + ".png";
         $(imgBox)
           .removeClass("v1")
           .addClass("v2");
+        removeClass = "v1";
+        addClass = "v2";
       } else if ($(imgBox).hasClass("v2")) {
         img.src = newSrcBase + 3 + ".png";
+        newPicSrc = newSrcBase + 3 + ".png";
         $(imgBox)
           .removeClass("v2")
           .addClass("v3");
+        removeClass = "v2";
+        addClass = "v3";
       } else if ($(imgBox).hasClass("v3")) {
         img.src = newSrcBase + 1 + ".png";
+        newPicSrc = newSrcBase + 1 + ".png";
         $(imgBox)
           .removeClass("v3")
           .addClass("v1");
+        removeClass = "v3";
+        addClass = "v1";
       }
     }
-  // TODO: socket emit "changed object image"
-  // FIXME: 
+    console.log('newPicSrc:', newPicSrc);
     socket.emit("changed object image", {
-      activePlayer: activePlayer,
       clickedImgId: $clickedImgId,
-      selected: selected
+      newPicSrc: newPicSrc,
+      removeClass: removeClass,
+      addClass: addClass
     });
 
   } else {
     console.log("this object has only one image!");
+  }
+}
+
+function objectImageChanged(data) {
+  if (!itsMyTurn) {
+    const $img = $('#objects').find(`#${data.clickedImgId}`);
+    // console.log('$img.attr("src"):', $img.attr("src"));
+
+    $img.attr("src", data.newPicSrc);
+    $(`.img-box.${data.clickedImgId}`)
+      .removeClass(data.removeClass)
+      .addClass(data.addClass);
   }
 }
 
@@ -1298,10 +1330,9 @@ function discardAndRefillObjects(data) {
     // console.log($queue.children().last().attr("class"));
     $objects.append($queue.children().last());
   }
-  getObjectPositions();
 
   if (data.activePlayer == selectedPieceId) {
-    console.log("it was my turn!");
+    // console.log("it was my turn!");
     let activeObjectsHTML = $("#objects")[0].innerHTML;
     let queuedObjectsHTML = $("#queue")[0].innerHTML;
     socket.emit("objects for next turn", {
@@ -1310,6 +1341,7 @@ function discardAndRefillObjects(data) {
       queuedObjects: queuedObjectsHTML
     });
   }
+  getObjectPositions();
 }
 
 // drag&drop objects in main game:
@@ -1407,6 +1439,8 @@ function objectsAreMoving(data) {
     $(`.img-box.${data.clickedImgId}`).css({
       transform: `translate(${data.moveXvw}vw, ${data.moveYvw}vw) rotate(${data.transformRotate}deg)`
     });
+
+    // TODO: change z-index of moved objects
   }
 }
 
@@ -1446,7 +1480,7 @@ function buildingIsDone(data) {
     doneGong.play();
   }
   if (!itsMyTurn) {
-    $objects[0].innerHTML = data.movedObjects;
+    // $objects[0].innerHTML = data.movedObjects;
     $message.addClass("bold");
     $message[0].innerText = `what's all that stuff?`;
   } else if (itsMyTurn) {
@@ -1656,6 +1690,10 @@ socket.on("objects are moving", function(data) {
 
 socket.on("object dropped", function(data) {
   objectDropped(data);
+});
+
+socket.on("object image changed", function(data) {
+  objectImageChanged(data);
 });
 
 socket.on("building is done", function(data) {

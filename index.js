@@ -447,6 +447,15 @@ io.on("connection", socket => {
     });
   });
 
+  socket.on("changed object image", data => {
+    io.sockets.emit("object image changed", {
+      clickedImgId: data.clickedImgId,
+      newPicSrc: data.newPicSrc,
+      removeClass: data.removeClass,
+      addClass: data.addClass
+    });
+  });
+
   socket.on("made a guess", data => {
     collectGuesses(data);
   });
