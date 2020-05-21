@@ -195,7 +195,11 @@ const objObj = [
 ];
 const objects = document.getElementById("ticker-objects");
 let objectList = objects.getElementsByClassName("img-box"); //objectList[0] is always the first link in the list.. list stays in sync
-let left = objects.offsetLeft; //number (in px), x-position of element relative to its parent
+
+// let left = objects.offsetLeft; //number (in px), x-position of element relative to its parent
+// transform px units in vw units:
+let left = (objects.offsetLeft * 100) / viewportWidth;
+
 let myReq;
 
 // card deck: ----------------------------------
@@ -610,19 +614,22 @@ function shuffleObjects(objects) {
 // move ticker objects in start menu:
 function moveTickerObjects() {
   // left = left - 2;
-  left--;
+  // left--;
+  left = left - 0.07; // trying moving in vw units
   // console.log(left);
-  if (left < -objectList[0].offsetWidth) {
+  let vwPositionOfFirstObject = (objectList[0].offsetWidth * 100) / viewportWidth;
+  if (left < -vwPositionOfFirstObject) {
     //true when first link is off screen..
     // add to left the width of the currently first link
-    let widthOfFirstObject = objectList[0].offsetWidth; //use clientWidth instead?
+    let widthOfFirstObject = vwPositionOfFirstObject; //use clientWidth instead?
     // console.log(widthOfFirstObject);
     left += widthOfFirstObject;
     // make first link the last link
     objects.appendChild(objectList[0]); //appending will actually remove it from the start and add it to the end
   }
   myReq = requestAnimationFrame(moveTickerObjects); //like setTimeout, but the waiting time is adjusted to the framerate of used hardware(?)
-  objects.style.left = left + "px";
+  // objects.style.left = left + "px";
+  objects.style.left = left + "vw";
 }
 
 function changeLanguage() {
