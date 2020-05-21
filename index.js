@@ -403,10 +403,6 @@ io.on("connection", socket => {
     });
   });
 
-  socket.on("ready for next turn", () => {
-    io.sockets.emit("ready for next turn");
-  });
-
   socket.on("objects for next turn", data => {
     numberOfTurnsLeft--;
     if (numberOfTurnsLeft == 0) {
@@ -505,7 +501,8 @@ io.on("connection", socket => {
       delete joinedPlayers[socket.id];
       delete playerNames[piece];
       delete playerPointsTotal[piece];
-      // TODO: what happens if disconnected player is the game master?
+
+      // TODO: if disconnected player is the game master, the next joined player in rainbow order becomes game master:
     }
   });
 

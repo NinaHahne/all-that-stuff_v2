@@ -404,7 +404,7 @@ $(document).on("keydown", e => {
   } else if (e.keyCode == 13) {
     // = "ENTER"
     if (itsMyTurn) {
-      doneBuilding();
+      clickedDoneBuilding();
     }
   } else if (e.keyCode == 32) {
     // = "SPACE"
@@ -429,7 +429,7 @@ $(document).on("keydown", e => {
 });
 
 $(document).on("dblclick", ".img-box", e => {
-  if (gameStarted && itsMyTurn) {
+  if (gameStarted && itsMyTurn && !doneBtnPressed) {
     let imgBox = e.currentTarget;
     changeObjectImage(imgBox);
     // moveObjects();
@@ -444,11 +444,11 @@ $("#card-points").on("mousedown", ".table-row", function(e) {
 // FIXED: a player reconnecting during discussion time, couldn't make a guess in the next turn (but after a reconnecting again in that turn he could)
 // --> it was because everything inside #card-points" gets replaced on reconnection, including the event listener in a nested html element.
 
-$("#done-btn").on("click", doneBuilding);
+$("#done-btn").on("click", clickedDoneBuilding);
 
 $("#help-btn").on("click", toggleHelp);
 
-$("#next-btn").on("click", readyForNextTurn);
+$("#next-btn").on("click", clickedReadyForNextTurn);
 
 $("#play-again-btn").on("click", () => window.location.reload(false));
 
@@ -626,6 +626,7 @@ function moveTickerObjects() {
 }
 
 function changeLanguage() {
+  // I'm the game master and I'm changing the word card language
   let newLanguage;
   if (chosenLanguage == "english") {
     newLanguage = "german";
@@ -639,6 +640,7 @@ function changeLanguage() {
 }
 
 function languageHasBeenChanged(newLanguage) {
+  // game master changed the word card language.
   chosenLanguage = newLanguage;
   if (newLanguage == "english") {
     $("#english-flag").removeClass("hidden");
@@ -737,6 +739,7 @@ function addPlayer(data) {
 }
 
 function addPlayerMidGame(data) {
+  // one player got disconnected and needs all the info back to rejoin the game.
   players.push(data.selectedPieceId);
 
   // if I am the rejoining player:
@@ -770,17 +773,6 @@ function addPlayerMidGame(data) {
     // reset from previous game:
     // create "points if correct" boxes:
     resetPointsIfCorrect();
-
-    // $pointsIfCorrect[0].innerHTML = "";
-    // let highestAchievablePoint = players.length - 1;
-    // for (let i = highestAchievablePoint; i > 0; i--) {
-    //   let points = i;
-    //   if (i > 5) {
-    //     points = 5;
-    //   }
-    //   let elem = `<div class="points">${points}</div>`;
-    //   $pointsIfCorrect.append(elem);
-    // }
 
     correctAnswer = data.correctAnswer;
 
@@ -1019,7 +1011,6 @@ function getObjectPositions() {
     let objLeft = $(this).position().left;
     // console.log('objTop: ', objTop, 'objLeft: ', objLeft);
     $(this).css({
-      // position: 'absolute',
       top: objTop + "px",
       left: objLeft + "px"
     });
@@ -1052,6 +1043,7 @@ function toggleHelp() {
 
 // drag&drop objects in main game:
 function updatePosition(e) {
+  // it's my turn and I'm moving an object.
   objectMoved = true;
   const $clickedImgBox = $(".move");
 
@@ -1105,6 +1097,7 @@ function updatePosition(e) {
 }
 
 function rotateObject(direction) {
+  // it's my turn and I'm rotating an object.
   if ($clickedImgBox.hasClass("selected")) {
     let rotate;
     if (direction == "clockwise") {
@@ -1124,6 +1117,7 @@ function rotateObject(direction) {
 }
 
 function moveObjects(clickedImgId, moveXvw, moveYvw, transformRotate) {
+  // it's my turn and I am moving an object.
   // pass objects with new coordinates to all players:
   let activeObjectsHTML = $("#objects")[0].innerHTML;
 
@@ -1138,6 +1132,7 @@ function moveObjects(clickedImgId, moveXvw, moveYvw, transformRotate) {
 }
 
 function objectsAreMoving(data) {
+  // other player moves an object.
   if (!itsMyTurn) {
     // $objects[0].innerHTML = data.movedObjects;
 
@@ -1152,6 +1147,7 @@ function objectsAreMoving(data) {
 }
 
 function objectIsDropped(data) {
+  // other player drops object.
   if (!itsMyTurn) {
     if (data.selected) {
       // bring recently dropped objects to the front:
@@ -1182,15 +1178,16 @@ function pullToFront($imgBox) {
 }
 
 function changeObjectImage(imgBox) {
+  // it's my turn and I'm changing an object image.
+
   if (!$(imgBox).hasClass("only1")) {
     // console.log('more than one image!');
     const img = imgBox.querySelector("img");
-    // console.log(img.id);
     const fileName = img.src.split("objects/")[1];
     const projectPath = "/objects/" + fileName;
     const srcNameV = projectPath.split(".png")[0];
     const newSrcBase = srcNameV.substring(0, srcNameV.length - 1);
-    // console.log('active image version: ', srcNameV[srcNameV.length - 1]);
+
     let newPicSrc;
     let removeClass;
     let addClass;
@@ -1239,7 +1236,7 @@ function changeObjectImage(imgBox) {
         addClass = "v1";
       }
     }
-    console.log("newPicSrc:", newPicSrc);
+    // console.log("newPicSrc:", newPicSrc);
     socket.emit("changed object image", {
       clickedImgId: $clickedImgId,
       newPicSrc: newPicSrc,
@@ -1252,10 +1249,10 @@ function changeObjectImage(imgBox) {
 }
 
 function objectImageChanged(data) {
+  // other player changed object image.
   if (!itsMyTurn) {
     const $img = $("#objects").find(`#${data.clickedImgId}`);
-    // console.log('$img.attr("src"):', $img.attr("src"));
-
+    // set new image source:
     $img.attr("src", data.newPicSrc);
     $(`.img-box.${data.clickedImgId}`)
       .removeClass(data.removeClass)
@@ -1263,13 +1260,12 @@ function objectImageChanged(data) {
   }
 }
 
-function doneBuilding() {
+function clickedDoneBuilding() {
   let $selectedObjects = $("#objects").find(".selected");
 
   // check if there is at least 1 object in the construction area:
   if ($selectedObjects.length > 0) {
     let activeObjectsHTML = $("#objects")[0].innerHTML;
-    // console.log(activeObjectsHTML);
 
     // TODO: In case someone resized their window during the building, the position of objects in the construction area could be a bit off on their screen. so to make sure, they see exactly what the builder built, send coordinates of selected objects again...
 
@@ -1405,47 +1401,64 @@ function flashPoints($playerPoints) {
   }, 350);
 }
 
-function readyForNextTurn() {
-  socket.emit("ready for next turn");
+function clickedReadyForNextTurn() {
+  // game master decides when it's time for the next turn:
+  discardAndRefillObjects();
 }
 
-function discardAndRefillObjects(data) {
+function discardAndRefillObjects() {
+  // NOTE: this function is only triggered by the GAME MASTER when clicking "ready for next turn". other players will get the objects for next turn from the game master.
+
   const numberOfUsedObjects = $(".selected").length;
-  // console.log($queue.children().last().attr("class"));
+
   $objects.children(".img-box").css({
     position: "unset"
   });
   $(".selected").each(function() {
-    $queue.prepend($(this));
+    // reset object images to v1:
+    resetObjectImage($(this));
+
     $(this).removeClass("selected");
     $(this).css({
       position: "unset",
       transform: `translate(${0}px, ${0}px)`,
       "z-index": 1
     });
+    $queue.prepend($(this));
   });
   for (let i = 0; i < numberOfUsedObjects; i++) {
-    // console.log($queue.children().last().attr("class"));
-
-    // used together with flex wrap in #objects:
+    // used together with css flex wrap in #objects:
     // $objects.append($queue.children().last());
-    
-    // used together with flex wrap-reverse in #objects:
+
+    // used together with css flex wrap-reverse in #objects:
     $objects.prepend($queue.children().last());
   }
 
-  if (data.activePlayer == selectedPieceId) {
-    // console.log("it was my turn!");
-    let activeObjectsHTML = $("#objects")[0].innerHTML;
-    let queuedObjectsHTML = $("#queue")[0].innerHTML;
-    socket.emit("objects for next turn", {
-      activePlayer: data.activePlayer,
-      activeObjects: activeObjectsHTML,
-      queuedObjects: queuedObjectsHTML
-    });
-  }
-  // TODO: reset object images to v1
+  let activeObjectsHTML = $("#objects")[0].innerHTML;
+  let queuedObjectsHTML = $("#queue")[0].innerHTML;
+
+  socket.emit("objects for next turn", {
+    activePlayer: dataForNextTurn.activePlayer,
+    activeObjects: activeObjectsHTML,
+    queuedObjects: queuedObjectsHTML
+  });
+
   getObjectPositions();
+}
+
+function resetObjectImage($selectedObject) {
+  if (!$selectedObject.hasClass('v1') && !$selectedObject.hasClass('only1')) {
+    let $img = $selectedObject.find('img');
+    let oldSrc = $img.attr('src');
+    let srcNameV = oldSrc.split(/2.png|3.png/g)[0];
+    let newSrc = srcNameV + "1.png";
+
+    // set new image source:
+    $img.attr("src", newSrc);
+    $selectedObject
+      .removeClass("v2 v3")
+      .addClass("v1");
+  }
 }
 
 function changeTurn(data) {
@@ -1467,26 +1480,18 @@ function changeTurn(data) {
   // reset from previous game:
   resetPointsIfCorrect();
 
-  // $("#points-if-correct")[0].innerHTML = "";
-  // let highestAchievablePoint = players.length - 1;
-  // for (let i = highestAchievablePoint; i > 0; i--) {
-  //   let points = i;
-  //   if (i > 5) {
-  //     points = 5;
-  //   }
-  //   let elem = `<div class="points">${points}</div>`;
-  //   $("#points-if-correct").append(elem);
-  // }
-
   activePlayer = data.nextPlayer;
   correctAnswer = data.correctAnswer;
   myGuess = "";
   doneBtnPressed = false;
 
-  $objects[0].innerHTML = data.activeObjects;
-  $queue[0].innerHTML = data.queuedObjects;
+  // objects and queue objects for the next turn were delivered by the game master. other players:
+  if (!iAmTheGameMaster) {
+    $objects[0].innerHTML = data.activeObjects;
+    $queue[0].innerHTML = data.queuedObjects;
 
-  getObjectPositions();
+    getObjectPositions();
+  }
 
   // new word card:
   cardTitle[0].innerHTML = data.newCard.title;
@@ -1499,6 +1504,7 @@ function changeTurn(data) {
   $message.removeClass("done");
   $("#next-btn").addClass("hidden");
 
+  // update number of turns left:
   let currentTurn = numberOfTurns - data.numberOfTurnsLeft + 1;
   $rounds[0].innerText = `${currentTurn}/${numberOfTurns}`;
 
@@ -1518,7 +1524,6 @@ function changeTurn(data) {
     $message[0].innerText = "...under construction...";
     itsMyTurn = false;
   }
-  // sessionStorage.setItem("itsMyTurn", itsMyTurn);
 
   if (!muted) {
     startGong.play();
@@ -1537,18 +1542,13 @@ function gameEnds(data) {
   $("#game-end").removeClass("hidden");
 
   let $playersEnd = $("#players-end");
-  // console.log('$playersEnd[0].innerHTML: ', $playersEnd[0].innerHTML);
   let ranking = data.rankingArray;
   for (let i = 0; i < ranking.length; i++) {
     let playerElement = `<div class="player ${ranking[i].player}">
                 <div class="player-name">${ranking[i].name}</div>
                 <div class="player-points">${ranking[i].points}</div>
             </div>`;
-    // let playerElement =
-    //     `<div class="player ${ranking[i].player}" id="${ranking[i].player}">
-    //         <div class="player-name">${ranking[i].player}</div>
-    //         <div class="player-points">${ranking[i].points}</div>
-    //     </div>`;
+
     $playersEnd.append(playerElement);
 
     let $piece = $("#players-end").find("." + ranking[i].player);
@@ -1600,7 +1600,6 @@ socket.on("welcome", function(data) {
 
   // check if the game has already started:
   gameStarted = data.gameStarted;
-
   if (!gameStarted) {
     if (!myPlayerName) {
       setTimeout(() => {
@@ -1609,7 +1608,6 @@ socket.on("welcome", function(data) {
     }
 
     // remember previously selected piece on page reload:
-    // console.log("your selected piece is: ", selectedPieceId);
     if (selectedPieceId && myPlayerName) {
       // TODO In case of a replay, I should also check here, if the selected piece has been taken by a new player in the meantime....
       selectedPiece(selectedPieceId);
@@ -1634,7 +1632,6 @@ socket.on("welcome", function(data) {
   gameMaster = data.gameMaster;
 
   players = data.selectedPieces;
-  // sessionStorage.setItem("players", players);
   playerNames = data.playerNames;
 
   // console.log('players in socket.on("welcome"): ', players);
@@ -1653,7 +1650,7 @@ socket.on("welcome", function(data) {
 });
 
 socket.on("add selected piece", function(data) {
-  // the first player who selected a piece, becomes game master:
+  // the first player who selects a piece, becomes game master:
   gameMaster = data.gameMaster;
 
   // if I'm the game master:
@@ -1730,6 +1727,8 @@ socket.on("everyone guessed", function(data) {
         setTimeout(() => {
           // show button for the game master to click, when everyone is ready for the next turn to start:
           dataForNextTurn = data;
+          activePlayer = data.activePlayer;
+
           if (iAmTheGameMaster) {
             $("#next-btn").removeClass("hidden");
           }
@@ -1740,15 +1739,10 @@ socket.on("everyone guessed", function(data) {
           $message.addClass("bold");
           $message[0].innerText = "discussion time!";
 
-          // discardAndRefillObjects(data);
         }, 1000); // time before change to next turn / next-button shows up
       }, 1500); // time before addPoints
     }, 1500); // time before showCorrectAnswer
   }, 500); // time before showAnswers
-});
-
-socket.on("ready for next turn", function() {
-  discardAndRefillObjects(dataForNextTurn);
 });
 
 socket.on("game ends", function(data) {
