@@ -224,6 +224,7 @@ let myPlayerName = sessionStorage.getItem("myPlayerName");
 let myTotalPoints = parseInt(sessionStorage.getItem("myTotalPoints"), 10);
 
 let doneBtnPressed = false;
+let everyoneGuessed = false;
 let myGuess;
 let correctAnswer;
 
@@ -761,6 +762,7 @@ function addPlayerMidGame(data) {
 
     doneBtnPressed = data.doneBtnPressed;
     gameMaster = data.gameMaster;
+    everyoneGuessed = data.everyoneGuessed;
 
     $message.removeClass("hidden");
 
@@ -1173,7 +1175,7 @@ function objectIsDropped(data) {
 
 function pullToFront($imgBox) {
   let highestZIndex = 1;
-  $(".selected").each(function() {
+  $('#objects').find(".selected").each(function() {
     const currentZIndex = Number($(this).css("z-index"));
     if (currentZIndex > highestZIndex) {
       highestZIndex = currentZIndex;
@@ -1415,13 +1417,14 @@ function clickedReadyForNextTurn() {
 
 function discardAndRefillObjects() {
   // NOTE: this function is only triggered by the GAME MASTER when clicking "ready for next turn". other players will get the objects for next turn from the game master.
+  const $selectedObjects = $('#objects').find(".selected");
 
-  const numberOfUsedObjects = $(".selected").length;
+  const numberOfUsedObjects = $selectedObjects.length;
 
   $objects.children(".img-box").css({
     position: "unset"
   });
-  $(".selected").each(function() {
+  $selectedObjects.each(function() {
     // reset object images to v1:
     resetObjectImage($(this));
 
@@ -1491,6 +1494,7 @@ function changeTurn(data) {
   correctAnswer = data.correctAnswer;
   myGuess = "";
   doneBtnPressed = false;
+  everyoneGuessed = false;
 
   // objects and queue objects for the next turn were delivered by the game master. other players:
   if (!iAmTheGameMaster) {
@@ -1563,6 +1567,41 @@ function gameEnds(data) {
   }
   if (!muted) {
     successJingle.play();
+  }
+}
+
+function newGameMaster(data) {
+  gameMaster = data.newGameMaster;
+  $(`#${data.oldGameMaster}`).find('.crown').addClass('hidden');
+  $(`#${data.newGameMaster}`).find('.crown').removeClass('hidden');
+  // if (!gameStarted) {
+  //   let $piece = $("#start-menu").find(`"#${data.oldGameMaster}`);
+  // }
+  if (!gameStarted) {
+    let $waitingMsg = $("#logo-button-box").find(".waiting-msg");
+    // if I am the new game master:
+    if (data.newGameMaster == selectedPieceId) {
+      iAmTheGameMaster = true;
+      $waitingMsg.addClass("hidden");
+      let $buttonBox = $("#logo-button-box").find(".buttonBox");
+      $buttonBox.removeClass("hidden");
+      $('#chosen-language').find('.crown').removeClass('hidden');
+    } else {
+      // $waitingMsg.removeClass("hidden");
+      // if I was the old game master:
+      if (data.oldGameMaster == selectedPieceId) {
+        // no change needed because I was the one that disconnected and the page is reloading/rerendered anyway...
+      }
+    }
+  // if game started:
+  } else {
+    // if I am the new game master:
+    if (data.newGameMaster == selectedPieceId) {
+      iAmTheGameMaster = true;
+      if (everyoneGuessed) {
+        $("#next-btn").removeClass("hidden");
+      }
+    }
   }
 }
 
@@ -1725,6 +1764,7 @@ socket.on("someone guessed", function(data) {
 
 socket.on("everyone guessed", function(data) {
   console.log("everyone guessed");
+  everyoneGuessed = true;
   setTimeout(() => {
     showAnswers(data);
     setTimeout(() => {
@@ -1759,4 +1799,9 @@ socket.on("game ends", function(data) {
 socket.on("add player midgame", function(data) {
   console.log(`${data.playerName} wants to rejoin the game`);
   addPlayerMidGame(data);
+});
+
+socket.on("new game master", function(data) {
+  console.log(`${data.oldGameMaster} got disconnected. ${data.newGameMaster} is the new gameMaster`);
+  newGameMaster(data);
 });
