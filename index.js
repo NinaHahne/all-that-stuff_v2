@@ -51,6 +51,7 @@ let playerNames = {};
 let doneBtnPressed = false;
 let cardPointsHTML;
 let guessingOrDiscussionTime = false;
+let everyoneGuessed = false;
 
 // active and queued objects:
 let activeObjects;
@@ -130,8 +131,8 @@ function replaceCard() {
   }
 }
 
-function nextPlayersTurn(data) {
-  let currentPlayerIndex = selectedPieces.indexOf(data.activePlayer);
+function getNextPlayer(player) {
+  let currentPlayerIndex = selectedPieces.indexOf(player);
 
   let nextPlayer;
   if (selectedPieces[currentPlayerIndex + 1]) {
@@ -139,7 +140,11 @@ function nextPlayersTurn(data) {
   } else {
     nextPlayer = selectedPieces[0];
   }
+  return nextPlayer;
+}
 
+function nextPlayersTurn(data) {
+  let nextPlayer = getNextPlayer(data.activePlayer);
   currentPlayer = nextPlayer;
 
   replaceCard();
@@ -152,6 +157,7 @@ function nextPlayersTurn(data) {
 
   doneBtnPressed = false;
   guessingOrDiscussionTime = false;
+  everyoneGuessed = false;
 
   io.sockets.emit("next turn", {
     activePlayer: data.activePlayer,
@@ -183,6 +189,7 @@ function collectGuesses(data) {
 
   // when everyone guessed: add points:
   if (guessedAnswersLength == joinedPlayersLength - 1) {
+    everyoneGuessed = true;
     let playerPointsIfCorrect = {};
     let actualPlayerPoints = {};
     let numberOfCorrectGuesses = 0;
@@ -280,6 +287,7 @@ function addPlayerMidGame(data) {
     firstCard: firstCard,
     correctAnswer: correctAnswer,
     guessedAnswers: guessedAnswers,
+    everyoneGuessed: everyoneGuessed,
     activeObjects: activeObjects,
     queuedObjects: queuedObjects,
     doneBtnPressed: doneBtnPressed,
@@ -414,6 +422,7 @@ io.on("connection", socket => {
 
   socket.on("done building", data => {
     activeObjects = data.movedObjects;
+    // queuedObjects = data.queuedObjects;
     let msg = `player "${data.activePlayer}" finished building! Guess what it is!`;
     doneBtnPressed = true;
     io.sockets.emit("building is done", {
@@ -491,18 +500,30 @@ io.on("connection", socket => {
     // NOTE: for some reason, this event only fires, when the browser is refreshed; not if it just lost internet connection? --> seems to be delayed, so players will be removed after disconnecting after they actually rejoined :(
 
     let piece = joinedPlayers[socket.id];
+
+    if (piece == gameMaster) {
+      // if disconnected player is the game master, the next joined player in rainbow order becomes game master:
+      gameMaster = getNextPlayer(piece);
+
+      io.sockets.emit("new game master", {
+        oldGameMaster: piece,
+        newGameMaster: gameMaster
+      });
+
+    }
+
     selectedPieces = selectedPieces.filter(item => item !== piece);
     if (selectedPieces.length == 0) {
       gameStarted = false;
     }
     if (piece) {
       console.log(`player piece "${piece}" is now free again`);
+
       io.sockets.emit("remove selected piece", piece);
       delete joinedPlayers[socket.id];
       delete playerNames[piece];
       delete playerPointsTotal[piece];
 
-      // TODO: if disconnected player is the game master, the next joined player in rainbow order becomes game master:
     }
   });
 
