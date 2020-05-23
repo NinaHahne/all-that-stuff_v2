@@ -334,13 +334,58 @@ window.addEventListener("resize", () => {
   [borderTop, borderBottom, borderLeft, borderRight] = get$objBorders(
     $constructionArea
   );
+  let oldViewPortWidth = viewportWidth;
+  // console.log('oldViewPortWidth:', oldViewPortWidth);
   viewportWidth = window.innerWidth;
+  // console.log('new viewportWidth:', viewportWidth);
+
+  // let viewPortChangeRatio = viewportWidth / oldViewPortWidth;
+  // console.log('viewPortChangeRatio:', viewPortChangeRatio);
+
+  // safe transform values of selected objects:
+  let savedTransformProps = {};
+  $objects.find(".selected").each(function() {
+
+    let imgId = $(this).find('img').attr('id');
+
+    let [translateXpx, translateYpx, rotate] = getTransformProps($(this));
+    // console.log('translateXpx, translateYpx, rotate:', translateXpx, translateYpx, rotate);
+
+    let translateXvw = (translateXpx * 100) / oldViewPortWidth;
+    let translateYvw = (translateYpx * 100) / oldViewPortWidth;
+
+    // FIXME: somehow this does not recalculate transform translate props
+    // properly. why not?
+    // but it's not that bad because as soon as the builder clicks "done" the
+    // positions of selected objects get corrected again...
+
+    // let translateXvw = ((translateXpx * 100) / oldViewPortWidth) * viewPortChangeRatio;
+    // let translateYvw = ((translateYpx * 100) / oldViewPortWidth) * viewPortChangeRatio;
+
+    savedTransformProps[imgId] = [translateXvw, translateYvw, rotate];
+    // console.log('savedTransformProps of', imgId, ':', savedTransformProps[imgId]);
+  });
+
+  // unset current transform props:
+  $objects.find(".selected").css({
+    transform: `translate(${0}vw, ${0}vw) rotate(${0}deg)`
+  });
+
   // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with getObjectPositions():
-  // // TODO: do something different for the selected objects.
-  $objects.children(".img-box").not(".selected").css({
+  $objects.children(".img-box").css({
     position: "unset"
   });
   getObjectPositions();
+
+  // get saved transform props back for selected objects:
+  $objects.find(".selected").each(function() {
+    let imgId = $(this).find('img').attr('id');
+
+    $(this).css({
+      transform: `translate(${savedTransformProps[imgId][0]}vw, ${savedTransformProps[imgId][1]}vw) rotate(${savedTransformProps[imgId][2]}deg)`
+    });
+  });
+
 });
 
 // touch events:
@@ -473,6 +518,7 @@ function handleMouseDown(e, touch) {
     // reset transform rotate:
     transformRotate = 0;
     // console.log($clickedImgBox);
+
     // show name of clicked object:
     $clickedImgId = $clickedImgBox.find("img").attr("id");
     console.log($clickedImgId);
@@ -484,33 +530,13 @@ function handleMouseDown(e, touch) {
     // get the clicked object to the very front:
     pullToFront($clickedImgBox);
 
-    //  https://css-tricks.com/get-value-of-css-rotation-through-javascript/
-
     // to move an object, that's already in the construction area, check the transform props and calculate with them when invoking updatePosition():
     if ($clickedImgBox.hasClass("selected")) {
-      const transformProps = $(".move").css("transform");
-      // console.log('transformProps: ', transformProps);
-      var values = transformProps.split("(")[1],
-        values = values.split(")")[0],
-        values = values.split(",");
 
-      translateX = Number(values[4]);
-      translateY = Number(values[5]);
-      // console.log('translateX: ', translateX, 'translateY: ', translateY);
-
+      [translateX, translateY, transformRotate] = getTransformProps($clickedImgBox);
       // set move props of clicked object to current values, in case it will be moved or rotated later:
       moveX = translateX;
       moveY = translateY;
-
-      // get the transform/rotate properties:
-      let a = Number(values[0]);
-      let b = Number(values[1]);
-      // let c= Number(values[2]);
-      // let d= Number(values[3]);
-      // console.log('a: ', a, 'b: ', b, 'c: ', c, 'd: ', d);
-
-      transformRotate = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-      // console.log('Rotate props of clicked Object: '+ transformRotate + 'deg');
     }
   }
 }
@@ -1015,7 +1041,7 @@ function get$objBorders($obj) {
 }
 
 function getObjectPositions() {
-  $objects.children().not(".selected").each(function() {
+  $objects.children(".img-box").each(function() {
     // position() gives position relative to positioned parent
     let objTop = $(this).position().top;
     let objLeft = $(this).position().left;
@@ -1025,7 +1051,7 @@ function getObjectPositions() {
       left: objLeft + "px"
     });
   });
-  // TODO: for selected objects subtract transformX/transformY from objTop and objLeft?
+
   $objects.children(".img-box").css({
     position: "absolute"
   });
@@ -1299,27 +1325,24 @@ function buildingIsDone(data) {
     // $objects[0].innerHTML = data.movedObjects;
     $message.addClass("bold");
     $message[0].innerText = `what's all that stuff?`;
-    // TODO: In case I resized my window during the building, the position of objects in the construction area could be a bit off on my screen. so to make sure, I see exactly what the builder built, get coordinates of selected objects again...
-    // data.movedObjects
-    // data.buildersViewportWidth
-    // recalculate position of all selected objects:
-    // translateXvw = (buildersTranslateX * 100) / data.buildersViewportWidth;
-    // translateYvw = (buildersTranslateY * 100) / data.buildersViewportWidth;
+
+    // In case I resized my window during the building, the position of objects in the construction area could be a bit off on my screen. so to make sure, I see exactly what the builder built (at least at the moment when they click "done"), get coordinates of selected objects again:
 
     let usedObjectsDiv = document.createElement("div");
     usedObjectsDiv.innerHTML = data.movedObjects;
     let $selectedObjects = $(usedObjectsDiv).find('.selected');
     // console.log('$selectedObjects:', $selectedObjects);
 
+    // recalculate position/transform props of all selected objects:
     $selectedObjects.each(function() {
-      // let [translateX, translateY, rotate] = getTransformProps($(this));
-      // console.log('translateX, translateY, rotate:', translateX, translateY, rotate);
-
       let imgId = $(this).find('img').attr('id');
-      console.log('imgId:', imgId);
 
-      let transformProps = $(this).css("transform"); // translate(-303px, -291px) rotate(0deg)
-      // console.log('transformProps:', transformProps);
+      // let [translateX, translateY, rotate] = getTransformProps($(this));
+      // NOTE: I can't use getTransformProps(); here because it only gets the transform props of a RENDERED HTML ELEMENT. but here I use an unrendered HTML element
+
+      let transformProps = $(this).css("transform");
+      // looks like: translate(-303px, -291px) rotate(0deg)
+
       let transformPropsSplit = transformProps.split(') rotate(');
       // console.log('transformPropsSplit:', transformPropsSplit);
 
@@ -1327,16 +1350,11 @@ function buildingIsDone(data) {
 
       let translateProps = transformPropsSplit[0].split('translate(')[1];
       translateProps = translateProps.split(', ');
-      console.log('translateProps:', translateProps);
       let translateXpx = Number(translateProps[0].split('px')[0]);
       let translateYpx = Number(translateProps[1].split('px')[0]);
 
-      console.log('data.buildersViewportWidth:', data.buildersViewportWidth);
       let translateXvw = (translateXpx * 100) / data.buildersViewportWidth;
       let translateYvw = (translateYpx * 100) / data.buildersViewportWidth;
-
-      console.log('translateXvw:', translateXvw);
-      console.log('translateYvw:', translateYvw);
 
       $('#objects').find(`.${imgId}`).css({
         transform: `translate(${translateXvw}vw, ${translateYvw}vw) rotate(${rotate}deg)`
@@ -1358,13 +1376,11 @@ function getTransformProps($element) {
     tValues = tValues.split(")")[0],
     tValues = tValues.split(",");
 
-
     // get the transform/translate properties:
   let translateX = Number(tValues[4]);
   let translateY = Number(tValues[5]);
 
-  console.log('translateX:', translateX);
-
+  //  https://css-tricks.com/get-value-of-css-rotation-through-javascript/
   // get the transform/rotate properties:
   let a = Number(tValues[0]);
   let b = Number(tValues[1]);
