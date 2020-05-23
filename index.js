@@ -428,7 +428,8 @@ io.on("connection", socket => {
     io.sockets.emit("building is done", {
       message: msg,
       activePlayer: data.activePlayer,
-      movedObjects: data.movedObjects
+      movedObjects: data.movedObjects,
+      buildersViewportWidth: data.buildersViewportWidth
     });
   });
 

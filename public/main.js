@@ -336,10 +336,11 @@ window.addEventListener("resize", () => {
   );
   viewportWidth = window.innerWidth;
   // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with getObjectPositions():
-  // $objects.children(".img-box").css({
-  //   position: "unset"
-  // });
-  // getObjectPositions();
+  // // TODO: do something different for the selected objects.
+  $objects.children(".img-box").not(".selected").css({
+    position: "unset"
+  });
+  getObjectPositions();
 });
 
 // touch events:
@@ -1014,7 +1015,7 @@ function get$objBorders($obj) {
 }
 
 function getObjectPositions() {
-  $objects.children().each(function() {
+  $objects.children().not(".selected").each(function() {
     // position() gives position relative to positioned parent
     let objTop = $(this).position().top;
     let objLeft = $(this).position().left;
@@ -1024,6 +1025,7 @@ function getObjectPositions() {
       left: objLeft + "px"
     });
   });
+  // TODO: for selected objects subtract transformX/transformY from objTop and objLeft?
   $objects.children(".img-box").css({
     position: "absolute"
   });
@@ -1270,22 +1272,25 @@ function objectImageChanged(data) {
 }
 
 function clickedDoneBuilding() {
-  let $selectedObjects = $("#objects").find(".selected");
+  // it's my turn and I clicked the "done" button.
+  const $selectedObjects = $("#objects").find(".selected");
 
   // check if there is at least 1 object in the construction area:
   if ($selectedObjects.length > 0) {
     let activeObjectsHTML = $("#objects")[0].innerHTML;
 
-    // TODO: In case someone resized their window during the building, the position of objects in the construction area could be a bit off on their screen. so to make sure, they see exactly what the builder built, send coordinates of selected objects again...
-
+    // TODO: In case someone resized their window during the building, the position of objects in the construction area could be a bit off on their screen. so to make sure, they see exactly what the builder (me) built, send along my current viewportWidth:
+    console.log('viewportWidth:', viewportWidth);
     socket.emit("done building", {
       activePlayer: activePlayer,
-      movedObjects: activeObjectsHTML
+      movedObjects: activeObjectsHTML,
+      buildersViewportWidth: viewportWidth
     });
   }
 }
 
 function buildingIsDone(data) {
+  // the builder finished building.
   console.log(data.message);
   if (!muted) {
     doneGong.play();
@@ -1294,6 +1299,50 @@ function buildingIsDone(data) {
     // $objects[0].innerHTML = data.movedObjects;
     $message.addClass("bold");
     $message[0].innerText = `what's all that stuff?`;
+    // TODO: In case I resized my window during the building, the position of objects in the construction area could be a bit off on my screen. so to make sure, I see exactly what the builder built, get coordinates of selected objects again...
+    // data.movedObjects
+    // data.buildersViewportWidth
+    // recalculate position of all selected objects:
+    // translateXvw = (buildersTranslateX * 100) / data.buildersViewportWidth;
+    // translateYvw = (buildersTranslateY * 100) / data.buildersViewportWidth;
+
+    let usedObjectsDiv = document.createElement("div");
+    usedObjectsDiv.innerHTML = data.movedObjects;
+    let $selectedObjects = $(usedObjectsDiv).find('.selected');
+    // console.log('$selectedObjects:', $selectedObjects);
+
+    $selectedObjects.each(function() {
+      // let [translateX, translateY, rotate] = getTransformProps($(this));
+      // console.log('translateX, translateY, rotate:', translateX, translateY, rotate);
+
+      let imgId = $(this).find('img').attr('id');
+      console.log('imgId:', imgId);
+
+      let transformProps = $(this).css("transform"); // translate(-303px, -291px) rotate(0deg)
+      // console.log('transformProps:', transformProps);
+      let transformPropsSplit = transformProps.split(') rotate(');
+      // console.log('transformPropsSplit:', transformPropsSplit);
+
+      let rotate = transformPropsSplit[1].split('deg)')[0];
+
+      let translateProps = transformPropsSplit[0].split('translate(')[1];
+      translateProps = translateProps.split(', ');
+      console.log('translateProps:', translateProps);
+      let translateXpx = Number(translateProps[0].split('px')[0]);
+      let translateYpx = Number(translateProps[1].split('px')[0]);
+
+      console.log('data.buildersViewportWidth:', data.buildersViewportWidth);
+      let translateXvw = (translateXpx * 100) / data.buildersViewportWidth;
+      let translateYvw = (translateYpx * 100) / data.buildersViewportWidth;
+
+      console.log('translateXvw:', translateXvw);
+      console.log('translateYvw:', translateYvw);
+
+      $('#objects').find(`.${imgId}`).css({
+        transform: `translate(${translateXvw}vw, ${translateYvw}vw) rotate(${rotate}deg)`
+      });
+    });
+
   } else if (itsMyTurn) {
     $message.removeClass("bold");
     $message[0].innerText = `done!`;
@@ -1301,6 +1350,31 @@ function buildingIsDone(data) {
   $message.addClass("done");
   doneBtnPressed = true;
   // sessionStorage.setItem("doneBtnPressed", doneBtnPressed);
+}
+
+function getTransformProps($element) {
+  const transformProps = $element.css("transform");
+  var tValues = transformProps.split("(")[1],
+    tValues = tValues.split(")")[0],
+    tValues = tValues.split(",");
+
+
+    // get the transform/translate properties:
+  let translateX = Number(tValues[4]);
+  let translateY = Number(tValues[5]);
+
+  console.log('translateX:', translateX);
+
+  // get the transform/rotate properties:
+  let a = Number(tValues[0]);
+  let b = Number(tValues[1]);
+  // let c= Number(values[2]);
+  // let d= Number(values[3]);
+  // console.log('a: ', a, 'b: ', b, 'c: ', c, 'd: ', d);
+
+  let rotate = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+
+  return [translateX, translateY, rotate];
 }
 
 function guessWordFromCard(e) {
