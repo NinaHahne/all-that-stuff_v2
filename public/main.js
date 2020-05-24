@@ -342,6 +342,8 @@ window.addEventListener("resize", () => {
   // let viewPortChangeRatio = viewportWidth / oldViewPortWidth;
   // console.log('viewPortChangeRatio:', viewPortChangeRatio);
 
+  // TODO: put the following code in a function adjustObjectPositions(currentViewPortWidth) and also use it after a player rejoined the game and got the backup-objects..
+
   // safe transform values of selected objects:
   let savedTransformProps = {};
   $objects.find(".selected").each(function() {
@@ -1675,6 +1677,7 @@ function newGameMaster(data) {
       $waitingMsg.addClass("hidden");
       let $buttonBox = $("#logo-button-box").find(".buttonBox");
       $buttonBox.removeClass("hidden");
+      $("#chosen-language").addClass("game-master");
       $('#chosen-language').find('.crown').removeClass('hidden');
     } else {
       // $waitingMsg.removeClass("hidden");
@@ -1794,9 +1797,7 @@ socket.on("add selected piece", function(data) {
     iAmTheGameMaster = true;
     console.log("you are the game master");
     $("#chosen-language").addClass("game-master");
-    $("#chosen-language")
-      .find(".crown")
-      .removeClass("hidden");
+    $("#chosen-language").find(".crown").removeClass("hidden");
 
     let $buttonBox = $("#logo-button-box").find(".buttonBox");
     $buttonBox.removeClass("hidden");
