@@ -20,6 +20,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 48vw;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -29,6 +30,8 @@ body {
   /*font-family: 'Special Elite', cursive;*/
   font-family: "Life Savers", cursive;
   overflow: hidden;
+  /* overflow-y: scroll; */
+  /* overflow-x: hidden; */
   /******background image******/
   background-image: url("/images/white-wall.png");
   -webkit-background-size: cover;
@@ -105,7 +108,7 @@ header {
   display: flex;
   /* height: 91%; */
   /* width: 60%; */
-  width: 64vw;
+  width: 66vw;
   flex-direction: column;
   flex-grow: 1;
   flex-shrink: 0;
@@ -119,9 +122,9 @@ header {
   /* flex-grow: 1; */
   flex-shrink: 0;
   /* width: 40%; */
-  width: 36vw;
+  width: 34vw;
   /* padding: 8px; */
-  padding: 0.5vw;
+  padding: 0.5vw 1vw 0.5vw 0.5vw;
   /* align-items: flex-end; */
   align-items: center;
   /* justify-content: space-between; */
@@ -141,17 +144,17 @@ header {
 #card-points {
   display: flex;
   flex-direction: column;
-  height: 38vw;
+  height: 33vw;
   flex-grow: 1;
   justify-content: space-between;
-  padding-right: 0.6vw;
+  padding-right: 1vw;
 }
 
 #construction-area {
   position: relative;
   display: flex;
-  height: 38vw;
-  width: 36vw;
+  height: 33vw;
+  width: 35vw;
   border-width: 0.15vw;
   border-style: dashed;
   border-radius: 1.3vw;
@@ -166,7 +169,7 @@ header {
   display: flex;
   /* flex-direction: row; */
   flex-direction: row-reverse;
-  height: 47vw;
+  height: 42vw;
   width: 100%;
   flex-shrink: 0;
   /* flex-wrap: wrap; */
@@ -224,7 +227,7 @@ header {
 #muted {
   position: absolute;
   height: 4vw;
-  bottom: 1vw;
+  bottom: 0.5vw;
   left: 1vw;
   z-index: 2000;
 }
@@ -1113,7 +1116,8 @@ small {
 /* §§ ----- STYLES FOR PARTICULAR OBJECTS --------- */
 .banana {
   /* height: 60px; */
-  height: 3.2vw;
+  /* height: 3.2vw; */
+  height: 2.88vw;
   width: auto;
   clip-path: polygon(
     -2% 50%,
@@ -1133,7 +1137,8 @@ small {
 }
 .bridge {
   /* height: 100px; */
-  height: 5.2vw;
+  /* height: 5.2vw; */
+  height: 4.68vw;
   width: auto;
 }
 .bridge.v1 {
@@ -1160,17 +1165,21 @@ small {
     0% 99%
   );
 }
+/* TODO: clip-path bridge v1 & v2 */
 .bridge.v2 {
   /* height: 66px; */
-  height: 3.5vw;
+  /* height: 3.5vw; */
+  height: 3.15vw;
 }
 .bridge.v3 {
   /* height: 86px; */
   height: 4.5vw;
+  height: 4.05vw;
 }
 .cloth {
   /* height: 270px; */
-  height: 14vw;
+  /* height: 14vw; */
+  height: 12.6vw;
   width: auto;
 }
 .cloth.v1 {
@@ -1187,7 +1196,8 @@ small {
 }
 .cloth.v2 {
   /* height: 200px; */
-  height: 10.4vw;
+  /* height: 10.4vw; */
+  height: 9.36vw;
   clip-path: polygon(
     19% 25%,
     37% 28%,
@@ -1204,12 +1214,14 @@ small {
 }
 .cloth.v3 {
   /* height: 270px; */
-  height: 14vw;
+  /* height: 14vw; */
+  height: 12.6vw;
   clip-path: polygon(0 0, 94% 0, 100% 100%, 0% 100%);
 }
 .coin {
   /* height: 100px; */
-  height: 5.1vw;
+  /* height: 5.1vw; */
+  height: 4.59vw;
   width: auto;
 }
 .coin.v1,
@@ -1218,7 +1230,8 @@ small {
 }
 .flower {
   /* height: 170px; */
-  height: 8.9vw;
+  /* height: 8.9vw; */
+  height: 8.01vw;
   width: auto;
 }
 .flower.v1 {
@@ -1226,7 +1239,8 @@ small {
 }
 .flower.v2 {
   /* height: 50px; */
-  height: 2.6vw;
+  /* height: 2.6vw; */
+  height: 2.34vw;
   clip-path: polygon(
     0% 42%,
     2% 40%,
@@ -1301,7 +1315,8 @@ small {
 
 .fur {
   /* height: 200px; */
-  height: 10.3vw;
+  /* height: 10.3vw; */
+  height: 9.27vw;
   width: auto;
   clip-path: polygon(
     38% -1%,
@@ -1318,7 +1333,8 @@ small {
 }
 .giant {
   /* height: 200px; */
-  height: 10.4vw;
+  /* height: 10.4vw; */
+  height: 9.36vw;
   width: auto;
 }
 .giant.v1 {
@@ -1399,7 +1415,8 @@ small {
 
 .peg {
   /* height: 120px; */
-  height: 6.3vw;
+  /* height: 6.3vw; */
+  height: 5.67vw;
   width: auto;
 }
 .peg.v1 {
@@ -1407,7 +1424,8 @@ small {
 }
 .peg.v2 {
   /* height: 110px; */
-  height: 5.8vw;
+  /* height: 5.8vw; */
+  height: 5.22vw;
   clip-path: polygon(
     11% 0%,
     13% -1%,
@@ -1437,7 +1455,8 @@ small {
 }
 .pig {
   /* height: 90px; */
-  height: 4.7vw;
+  /* height: 4.7vw; */
+  height: 4.23vw;
   width: auto;
 }
 .pig.v1 {
@@ -1475,6 +1494,7 @@ small {
     -2% 50%
   );
 }
+/* TODO: clip-path pig v2 & v3 */
 .pig.v2 {
 
 }
@@ -1483,7 +1503,8 @@ small {
 }
 .plane {
   /* height: 160px; */
-  height: 8.2vw;
+  /* height: 8.2vw; */
+  height: 7.38vw;
   width: auto;
 }
 .plane.v1 {
@@ -1516,28 +1537,35 @@ small {
     2% 68%
   );
 }
+/* TODO: clip-path plane v2 & v3 */
 .plane.v2 {
   /* height: 100px; */
-  height: 5.2vw;
+  /* height: 5.2vw; */
+  height: 4.68vw;
 }
 .plane.v3 {
   /* height: 100px; */
-  height: 5.2vw;
+  /* height: 5.2vw; */
+  height: 4.68vw;
+
 }
 .pokerchip {
   /* height: 90px; */
-  height: 4.7vw;
+  /* height: 4.7vw; */
+  height: 4.23vw;
   width: auto;
 }
 .pole {
   /* height: 170px; */
-  height: 8.9vw;
+  /* height: 8.9vw; */
+  height: 8.01vw;
   width: auto;
   clip-path: polygon(99% -2%, 102% 5%, 0% 103%, -2% 94%);
 }
 .puzzle {
   /* height: 170px; */
-  height: 8.9vw;
+  /* height: 8.9vw; */
+  height: 8.01vw;
   width: auto;
 }
 .puzzle.v1 {
@@ -1590,7 +1618,8 @@ small {
 }
 .puzzle.v2 {
   /* height: 165px; */
-  height: 8.6vw;
+  /* height: 8.6vw; */
+  height: 7.74vw;
   clip-path: polygon(
     5% 25%,
     34% 25%,
@@ -1640,24 +1669,28 @@ small {
 }
 .ring {
   /* height: 95px; */
-  height: 4.9vw;
+  /* height: 4.9vw; */
+  height: 4.41vw;
   width: auto;
 }
 .ring.v1 {
   clip-path: circle(50% at center);
 }
 .ring.v2 {
-  height: 2.6vw;
+  /* height: 2.6vw; */
+  height: 2.34vw;
   clip-path: ellipse(51% 54% at 50% 49%);
 }
 .rummikubtile {
   /* height: 150px; */
-  height: 7.8vw;
+  /* height: 7.8vw; */
+  height: 7.02vw;
   width: auto;
 }
 .scissors {
   /* height: 100px; */
-  height: 5.3vw;
+  /* height: 5.3vw; */
+  height: 4.77vw;
   width: auto;
   clip-path: polygon(
     0% 29%,
@@ -1691,7 +1724,8 @@ small {
 }
 .stone {
   /* height: 90px; */
-  height: 4.7vw;
+  /* height: 4.7vw; */
+  height: 4.23vw;
   width: auto;
   clip-path: polygon(
     -2% 63%,
@@ -1714,12 +1748,14 @@ small {
 }
 .ticket {
   /* height: 190px; */
-  height: 9.8vw;
+  /* height: 9.8vw; */
+  height: 8.82vw;
   width: auto;
 }
 .token {
   /* height: 110px; */
-  height: 5.6vw;
+  /* height: 5.6vw; */
+  height: 5.04vw;
   width: auto;
 }
 .token.v1 {
@@ -1730,7 +1766,8 @@ small {
 }
 .triangle {
   /* height: 110px; */
-  height: 5.6vw;
+  /* height: 5.6vw; */
+  height: 5.04vw;
   width: auto;
   clip-path: polygon(-10% 110%, 45% 0%, 50% 0%, 107% 96%);
 }
