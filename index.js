@@ -56,6 +56,7 @@ let everyoneGuessed = false;
 // active and queued objects:
 let activeObjects;
 let queuedObjects;
+let buildersViewportWidth;
 let dataForNextTurn = {};
 
 // TODO: IN THE FUTURE: replace above selectedPieces, guessedAnswers & playerPointsTotal with playersObj:
@@ -290,6 +291,7 @@ function addPlayerMidGame(data) {
     everyoneGuessed: everyoneGuessed,
     activeObjects: activeObjects,
     queuedObjects: queuedObjects,
+    buildersViewportWidth: buildersViewportWidth,
     doneBtnPressed: doneBtnPressed,
     cardPointsHTML: cardPointsHTML,
     guessingOrDiscussionTime: guessingOrDiscussionTime,
@@ -421,23 +423,25 @@ io.on("connection", socket => {
   });
 
   socket.on("done building", data => {
-    activeObjects = data.movedObjects;
+    activeObjects = data.activeObjects;
     // queuedObjects = data.queuedObjects;
     let msg = `player "${data.activePlayer}" finished building! Guess what it is!`;
     doneBtnPressed = true;
     io.sockets.emit("building is done", {
       message: msg,
       activePlayer: data.activePlayer,
-      movedObjects: data.movedObjects,
+      activeObjects: data.activeObjects,
       buildersViewportWidth: data.buildersViewportWidth
     });
   });
 
   socket.on("moving objects", data => {
-    activeObjects = data.movedObjects;
+    activeObjects = data.activeObjects;
+    buildersViewportWidth = data.viewportWidth;
     io.sockets.emit("objects are moving", {
       activePlayer: data.activePlayer,
-      movedObjects: data.movedObjects,
+      activeObjects: data.activeObjects,
+      buildersViewportWidth: data.viewportWidth,
       clickedImgId: data.clickedImgId,
       moveXvw: data.moveXvw,
       moveYvw: data.moveYvw,

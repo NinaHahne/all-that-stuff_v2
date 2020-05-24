@@ -334,59 +334,18 @@ window.addEventListener("resize", () => {
   [borderTop, borderBottom, borderLeft, borderRight] = get$objBorders(
     $constructionArea
   );
-  let oldViewPortWidth = viewportWidth;
-  // console.log('oldViewPortWidth:', oldViewPortWidth);
+  let oldViewportWidth = viewportWidth;
+  // console.log('oldViewportWidth:', oldViewportWidth);
   viewportWidth = window.innerWidth;
   // console.log('new viewportWidth:', viewportWidth);
 
-  // let viewPortChangeRatio = viewportWidth / oldViewPortWidth;
+  // let viewPortChangeRatio = viewportWidth / oldViewportWidth;
   // console.log('viewPortChangeRatio:', viewPortChangeRatio);
+  let activeObjects = $("#objects")[0].innerHTML;
 
-  // TODO: put the following code in a function adjustObjectPositions(currentViewPortWidth) and also use it after a player rejoined the game and got the backup-objects..
+  adjustObjectPositions(viewportWidth);
 
-  // safe transform values of selected objects:
-  let savedTransformProps = {};
-  $objects.find(".selected").each(function() {
-
-    let imgId = $(this).find('img').attr('id');
-
-    let [translateXpx, translateYpx, rotate] = getTransformProps($(this));
-    // console.log('translateXpx, translateYpx, rotate:', translateXpx, translateYpx, rotate);
-
-    let translateXvw = (translateXpx * 100) / oldViewPortWidth;
-    let translateYvw = (translateYpx * 100) / oldViewPortWidth;
-
-    // FIXME: somehow this does not recalculate transform translate props
-    // properly. why not?
-    // but it's not that bad because as soon as the builder clicks "done" the
-    // positions of selected objects get corrected again...
-
-    // let translateXvw = ((translateXpx * 100) / oldViewPortWidth) * viewPortChangeRatio;
-    // let translateYvw = ((translateYpx * 100) / oldViewPortWidth) * viewPortChangeRatio;
-
-    savedTransformProps[imgId] = [translateXvw, translateYvw, rotate];
-    // console.log('savedTransformProps of', imgId, ':', savedTransformProps[imgId]);
-  });
-
-  // unset current transform props:
-  $objects.find(".selected").css({
-    transform: `translate(${0}vw, ${0}vw) rotate(${0}deg)`
-  });
-
-  // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with getObjectPositions():
-  $objects.children(".img-box").css({
-    position: "unset"
-  });
-  getObjectPositions();
-
-  // get saved transform props back for selected objects:
-  $objects.find(".selected").each(function() {
-    let imgId = $(this).find('img').attr('id');
-
-    $(this).css({
-      transform: `translate(${savedTransformProps[imgId][0]}vw, ${savedTransformProps[imgId][1]}vw) rotate(${savedTransformProps[imgId][2]}deg)`
-    });
-  });
+  adjustSelectedObjectPositions(activeObjects, oldViewportWidth);
 
 });
 
@@ -833,6 +792,11 @@ function addPlayerMidGame(data) {
     $objects[0].innerHTML = data.activeObjects;
     $queue[0].innerHTML = data.queuedObjects;
 
+    // adjust object positions to my viewportWidth:
+    adjustObjectPositions(window.innerWidth);
+    // adjust selected object positions to exactly match what the builder built so far:
+    adjustSelectedObjectPositions(data.activeObjects, data.buildersViewportWidth);
+
     $("#start-menu").addClass("hidden");
     $("#main-game").removeClass("hidden");
 
@@ -1059,6 +1023,87 @@ function getObjectPositions() {
   });
 }
 
+function adjustObjectPositions(currentViewPortWidth) {
+  // safe transform values of selected objects:
+  let savedTransformProps = {};
+  $objects.find(".selected").each(function() {
+
+    let imgId = $(this).find('img').attr('id');
+
+    let [translateXpx, translateYpx, rotate] = getTransformProps($(this));
+    // console.log('translateXpx, translateYpx, rotate:', translateXpx, translateYpx, rotate);
+
+    let translateXvw = (translateXpx * 100) / currentViewPortWidth;
+    let translateYvw = (translateYpx * 100) / currentViewPortWidth;
+
+    // FIXME: somehow this does not recalculate transform translate props
+    // properly. why not?
+    // but it's not that bad because as soon as the builder clicks "done" the
+    // positions of selected objects get corrected again...
+
+    // let translateXvw = ((translateXpx * 100) / oldViewportWidth) * viewPortChangeRatio;
+    // let translateYvw = ((translateYpx * 100) / oldViewportWidth) * viewPortChangeRatio;
+
+    savedTransformProps[imgId] = [translateXvw, translateYvw, rotate];
+    // console.log('savedTransformProps of', imgId, ':', savedTransformProps[imgId]);
+  });
+
+  // unset current transform props:
+  $objects.find(".selected").css({
+    transform: `translate(${0}vw, ${0}vw) rotate(${0}deg)`
+  });
+
+  // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with getObjectPositions():
+  $objects.children(".img-box").css({
+    position: "unset"
+  });
+  getObjectPositions();
+
+  // get saved transform props back for selected objects:
+  $objects.find(".selected").each(function() {
+    let imgId = $(this).find('img').attr('id');
+
+    $(this).css({
+      transform: `translate(${savedTransformProps[imgId][0]}vw, ${savedTransformProps[imgId][1]}vw) rotate(${savedTransformProps[imgId][2]}deg)`
+    });
+  });
+}
+
+function adjustSelectedObjectPositions(usedObjects, buildersViewportWidth) {
+  let usedObjectsDiv = document.createElement("div");
+  usedObjectsDiv.innerHTML = usedObjects;
+  let $selectedObjects = $(usedObjectsDiv).find('.selected');
+  // console.log('$selectedObjects:', $selectedObjects);
+
+  // recalculate position/transform props of all selected objects:
+  $selectedObjects.each(function() {
+    let imgId = $(this).find('img').attr('id');
+
+    // let [translateX, translateY, rotate] = getTransformProps($(this));
+    // NOTE: I can't use getTransformProps(); here because it only gets the transform props of a RENDERED HTML ELEMENT. but here I use an unrendered HTML element
+
+    let transformProps = $(this).css("transform");
+    // looks like: translate(-303px, -291px) rotate(0deg)
+
+    let transformPropsSplit = transformProps.split(') rotate(');
+    // console.log('transformPropsSplit:', transformPropsSplit);
+
+    let rotate = transformPropsSplit[1].split('deg)')[0];
+
+    let translateProps = transformPropsSplit[0].split('translate(')[1];
+    translateProps = translateProps.split(', ');
+    let translateXpx = Number(translateProps[0].split('px')[0]);
+    let translateYpx = Number(translateProps[1].split('px')[0]);
+
+    let translateXvw = (translateXpx * 100) / buildersViewportWidth;
+    let translateYvw = (translateYpx * 100) / buildersViewportWidth;
+
+    $('#objects').find(`.${imgId}`).css({
+      transform: `translate(${translateXvw}vw, ${translateYvw}vw) rotate(${rotate}deg)`
+    });
+  });
+}
+
 function resetPointsIfCorrect() {
   $("#points-if-correct")[0].innerHTML = "";
   let highestAchievablePoint = players.length - 1;
@@ -1095,27 +1140,6 @@ function updatePosition(e) {
     moveX = e.changedTouches[0].clientX - startX;
     moveY = e.changedTouches[0].clientY - startY;
   }
-
-  // // only update position, if object is inside body:
-  // let [top, bottom, left, right] = get$objBorders($clickedImgBox);
-  //
-  // if (bodyBorderLeft < left && right < bodyBorderRight) {
-  //     moveX = e.clientX - startX - ignoreX;
-  // } else {
-  //     // ---------- check here in which direction the mousemove is heading and update if direction is away from the body-border
-  //     console.log('object outside X body!');
-  //     // console.log(e.clientX);
-  //     ignoreX = e.clientX;
-  // }
-  //
-  // if (bodyBorderTop < top && bottom < bodyBorderBottom) {
-  //     moveY = e.clientY - startY - ignoreY;
-  // } else {
-  //     // ---------- check here in which direction the mousemove is heading and update if direction is away from the body-border
-  //     console.log('object outside Y body!');
-  //     // console.log(e.clientY);
-  //     ignoreY = e.clientY;
-  // }
 
   // to move an object, that's already in the construction area, check the transform props and calculate with them:
   if ($clickedImgBox.hasClass("selected")) {
@@ -1162,18 +1186,19 @@ function moveObjects(clickedImgId, moveXvw, moveYvw, transformRotate) {
 
   socket.emit("moving objects", {
     activePlayer: activePlayer,
-    movedObjects: activeObjectsHTML,
+    activeObjects: activeObjectsHTML,
     clickedImgId: clickedImgId,
     moveXvw: moveXvw,
     moveYvw: moveYvw,
-    transformRotate: transformRotate
+    transformRotate: transformRotate,
+    viewportWidth: viewportWidth
   });
 }
 
 function objectsAreMoving(data) {
   // other player moves an object.
   if (!itsMyTurn) {
-    // $objects[0].innerHTML = data.movedObjects;
+    // $objects[0].innerHTML = data.activeObjects;
 
     // move or rotate object:
     $(`.img-box.${data.clickedImgId}`).css({
@@ -1308,10 +1333,10 @@ function clickedDoneBuilding() {
     let activeObjectsHTML = $("#objects")[0].innerHTML;
 
     // TODO: In case someone resized their window during the building, the position of objects in the construction area could be a bit off on their screen. so to make sure, they see exactly what the builder (me) built, send along my current viewportWidth:
-    console.log('viewportWidth:', viewportWidth);
+    // console.log('viewportWidth:', viewportWidth);
     socket.emit("done building", {
       activePlayer: activePlayer,
-      movedObjects: activeObjectsHTML,
+      activeObjects: activeObjectsHTML,
       buildersViewportWidth: viewportWidth
     });
   }
@@ -1324,44 +1349,12 @@ function buildingIsDone(data) {
     doneGong.play();
   }
   if (!itsMyTurn) {
-    // $objects[0].innerHTML = data.movedObjects;
+    // $objects[0].innerHTML = data.activeObjects;
     $message.addClass("bold");
     $message[0].innerText = `what's all that stuff?`;
 
     // In case I resized my window during the building, the position of objects in the construction area could be a bit off on my screen. so to make sure, I see exactly what the builder built (at least at the moment when they click "done"), get coordinates of selected objects again:
-
-    let usedObjectsDiv = document.createElement("div");
-    usedObjectsDiv.innerHTML = data.movedObjects;
-    let $selectedObjects = $(usedObjectsDiv).find('.selected');
-    // console.log('$selectedObjects:', $selectedObjects);
-
-    // recalculate position/transform props of all selected objects:
-    $selectedObjects.each(function() {
-      let imgId = $(this).find('img').attr('id');
-
-      // let [translateX, translateY, rotate] = getTransformProps($(this));
-      // NOTE: I can't use getTransformProps(); here because it only gets the transform props of a RENDERED HTML ELEMENT. but here I use an unrendered HTML element
-
-      let transformProps = $(this).css("transform");
-      // looks like: translate(-303px, -291px) rotate(0deg)
-
-      let transformPropsSplit = transformProps.split(') rotate(');
-      // console.log('transformPropsSplit:', transformPropsSplit);
-
-      let rotate = transformPropsSplit[1].split('deg)')[0];
-
-      let translateProps = transformPropsSplit[0].split('translate(')[1];
-      translateProps = translateProps.split(', ');
-      let translateXpx = Number(translateProps[0].split('px')[0]);
-      let translateYpx = Number(translateProps[1].split('px')[0]);
-
-      let translateXvw = (translateXpx * 100) / data.buildersViewportWidth;
-      let translateYvw = (translateYpx * 100) / data.buildersViewportWidth;
-
-      $('#objects').find(`.${imgId}`).css({
-        transform: `translate(${translateXvw}vw, ${translateYvw}vw) rotate(${rotate}deg)`
-      });
-    });
+    adjustSelectedObjectPositions(data.activeObjects, data.buildersViewportWidth);
 
   } else if (itsMyTurn) {
     $message.removeClass("bold");
@@ -1369,7 +1362,6 @@ function buildingIsDone(data) {
   }
   $message.addClass("done");
   doneBtnPressed = true;
-  // sessionStorage.setItem("doneBtnPressed", doneBtnPressed);
 }
 
 function getTransformProps($element) {
