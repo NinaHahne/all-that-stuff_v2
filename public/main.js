@@ -342,10 +342,8 @@ window.addEventListener("resize", () => {
   // let viewPortChangeRatio = viewportWidth / oldViewportWidth;
   // console.log('viewPortChangeRatio:', viewPortChangeRatio);
   let activeObjects = $("#objects")[0].innerHTML;
-
+  // TODO: refactor this function to use the more simple way to grab the current transform props like in adjustSelectedObjectPositions():
   adjustObjectPositions(viewportWidth);
-
-  adjustSelectedObjectPositions(activeObjects, oldViewportWidth);
 
 });
 
@@ -1023,6 +1021,7 @@ function getObjectPositions() {
   });
 }
 
+// TODO: refactor this function to use the more simple way to grab the current transform props like in adjustSelectedObjectPositions():
 function adjustObjectPositions(currentViewPortWidth) {
   // safe transform values of selected objects:
   let savedTransformProps = {};
@@ -1035,11 +1034,6 @@ function adjustObjectPositions(currentViewPortWidth) {
 
     let translateXvw = (translateXpx * 100) / currentViewPortWidth;
     let translateYvw = (translateYpx * 100) / currentViewPortWidth;
-
-    // FIXME: somehow this does not recalculate transform translate props
-    // properly. why not?
-    // but it's not that bad because as soon as the builder clicks "done" the
-    // positions of selected objects get corrected again...
 
     // let translateXvw = ((translateXpx * 100) / oldViewportWidth) * viewPortChangeRatio;
     // let translateYvw = ((translateYpx * 100) / oldViewportWidth) * viewPortChangeRatio;
