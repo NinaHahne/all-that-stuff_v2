@@ -342,9 +342,7 @@ window.addEventListener("resize", () => {
   // let viewPortChangeRatio = viewportWidth / oldViewportWidth;
   // console.log('viewPortChangeRatio:', viewPortChangeRatio);
   let activeObjects = $("#objects")[0].innerHTML;
-  // TODO: refactor this function to use the more simple way to grab the current transform props like in adjustSelectedObjectPositions():
   adjustObjectPositions(viewportWidth);
-
 });
 
 // touch events:
@@ -1326,7 +1324,7 @@ function clickedDoneBuilding() {
   if ($selectedObjects.length > 0) {
     let activeObjectsHTML = $("#objects")[0].innerHTML;
 
-    // TODO: In case someone resized their window during the building, the position of objects in the construction area could be a bit off on their screen. so to make sure, they see exactly what the builder (me) built, send along my current viewportWidth:
+    // In case someone resized their window during the building, the position of objects in the construction area could be a bit off on their screen. so to make sure, they see exactly what the builder (me) built, send along my current viewportWidth:
     // console.log('viewportWidth:', viewportWidth);
     socket.emit("done building", {
       activePlayer: activePlayer,
