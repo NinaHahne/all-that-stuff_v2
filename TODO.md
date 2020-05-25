@@ -4,9 +4,6 @@ how to preload all the images and sounds?
 indicator for objects with more than 1 image
 change image version to v1 when object drops in the queue?
 
-layout mit flexbox?
-add card deck to the main page
-limit object drag to window borders?
 might wanna use .switchClass() from jquery ui?? (instead of .removeClass('v1').addClass('v2')
 
 ------------------------------------
