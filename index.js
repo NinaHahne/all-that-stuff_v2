@@ -403,8 +403,7 @@ io.on("connection", socket => {
     doneBtnPressed = false;
     guessingOrDiscussionTime = false;
 
-    let msg = `"${data.startPlayer}" started the game and starts with building!`;
-    // console.log(msg);
+    let msg = `"${currentPlayer}" starts with building!`;
 
     activeObjects = data.activeObjects;
     queuedObjects = data.queuedObjects;
