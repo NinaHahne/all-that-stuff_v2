@@ -171,6 +171,11 @@ function nextPlayersTurn(data) {
   });
 }
 
+function getStartPlayer() {
+  let startPlayerId = randomNumber(0, selectedPieces.length);
+  return selectedPieces[startPlayerId];
+}
+
 // Function to generate random number, min incl, max excl.
 function randomNumber(min, max) {
   return Math.floor(Math.random() * (max - min) + min);
@@ -353,7 +358,9 @@ io.on("connection", socket => {
   });
 
   socket.on("game started", data => {
-    currentPlayer = data.startPlayer;
+    // currentPlayer = data.startPlayer;
+    currentPlayer = getStartPlayer();
+
     // this line makes sure, that selectedPieces (joined players) is in the correct order, like the player pieces are rendered (in a beautiful rainbow order):
     // selectedPieces = data.joinedPlayerIds;
     selectedPieces.sort(rainbowSort);
@@ -404,7 +411,7 @@ io.on("connection", socket => {
 
     io.sockets.emit("game has been started", {
       message: msg,
-      startPlayer: data.startPlayer,
+      startPlayer: currentPlayer,
       activeObjects: data.activeObjects,
       queuedObjects: data.queuedObjects,
       firstCard: firstCard,

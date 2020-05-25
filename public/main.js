@@ -872,10 +872,6 @@ function startGame() {
   cancelAnimationFrame(myReq); //stops moving ticker
   let objArray = Array.from(objectList);
 
-  // whoever starts the game, is also the start player:
-  // TODO: change that to start with a random player
-  activePlayer = selectedPieceId;
-
   let activeObjects = objArray.slice(0, 10);
   let queuedObjects = objArray.slice(10);
   queuedObjects.reverse();
@@ -886,7 +882,7 @@ function startGame() {
   let queuedObjectsHTML = $("#queue")[0].innerHTML;
 
   socket.emit("game started", {
-    startPlayer: selectedPieceId,
+    // startPlayer: selectedPieceId,
     activeObjects: activeObjectsHTML,
     queuedObjects: queuedObjectsHTML
   });
@@ -927,6 +923,7 @@ function gameHasBeenStarted(data) {
   let playerArray = Array.from(joinedPlayersList);
   $joinedPlayersContainer.append(playerArray);
 
+  //game starts with a random start player:
   activePlayer = data.startPlayer;
 
   if (data.startPlayer != selectedPieceId) {
