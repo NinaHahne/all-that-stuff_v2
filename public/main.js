@@ -1634,7 +1634,7 @@ function gameEnds(data) {
   let ranking = data.rankingArray;
   for (let i = 0; i < ranking.length; i++) {
     let playerElement = `<div class="player ${ranking[i].player}">
-                <div class="player-name">${ranking[i].name}</div>
+                <div class="player-name">${ranking[i].name}:</div>
                 <div class="player-points">${ranking[i].points}</div>
             </div>`;
 
