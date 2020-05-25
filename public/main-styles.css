@@ -776,7 +776,7 @@ button:focus {
   position: relative;
   display: flex;
   width: 100%;
-  margin-bottom: 1%;
+  margin-bottom: 0.2vw;
 }
 
 .cardtitle {
@@ -865,7 +865,7 @@ small {
 
 #points-container h3 {
   margin-top: 0;
-  margin-bottom: 1.5%;
+  margin-bottom: 0.4vw;
   font-weight: 800;
   /* font-size: 30px; */
   font-size: 1.6vw;
