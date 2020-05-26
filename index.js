@@ -56,6 +56,7 @@ let everyoneGuessed = false;
 // active and queued objects:
 let activeObjects;
 let queuedObjects;
+let joinedPlayersHTML;
 let buildersViewportWidth;
 let dataForNextTurn = {};
 
@@ -265,16 +266,14 @@ function getWinner() {
     return b.points - a.points;
   });
 
-  let winner = ranking[0].player;
-  console.log(winner, "wins!");
-
   // reset selectedPieces for next game:
   selectedPieces = [];
   gameStarted = false;
 
+  // console.log("game over!");
   io.sockets.emit("game ends", {
-    rankingArray: ranking,
-    winner: winner
+    joinedPlayersHTML: joinedPlayersHTML,
+    rankingArray: ranking
   });
 }
 
@@ -420,6 +419,7 @@ io.on("connection", socket => {
   });
 
   socket.on("objects for next turn", data => {
+    joinedPlayersHTML = data.joinedPlayersHTML;
     numberOfTurnsLeft--;
     if (numberOfTurnsLeft == 0) {
       getWinner();

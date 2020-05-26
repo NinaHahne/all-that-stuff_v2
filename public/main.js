@@ -1519,11 +1519,13 @@ function discardAndRefillObjects() {
 
   let activeObjectsHTML = $("#objects")[0].innerHTML;
   let queuedObjectsHTML = $("#queue")[0].innerHTML;
+  let joinedPlayersHTML = $("#joined-players")[0].innerHTML;
 
   socket.emit("objects for next turn", {
     activePlayer: dataForNextTurn.activePlayer,
     activeObjects: activeObjectsHTML,
-    queuedObjects: queuedObjectsHTML
+    queuedObjects: queuedObjectsHTML,
+    joinedPlayersHTML: joinedPlayersHTML
   });
 
   getObjectPositions();
@@ -1626,21 +1628,63 @@ function gameEnds(data) {
   $("#game-end").removeClass("hidden");
 
   let $playersEnd = $("#players-end");
+
   let ranking = data.rankingArray;
-  for (let i = 0; i < ranking.length; i++) {
-    let playerElement = `<div class="player ${ranking[i].player}">
-                <div class="player-name">${ranking[i].name}:</div>
-                <div class="player-points">${ranking[i].points}</div>
-            </div>`;
+  // for (let i = 0; i < ranking.length; i++) {
+  //   let playerElement = `<div class="player ${ranking[i].player}">
+  //               <div class="player-name">${ranking[i].name}:</div>
+  //               <div class="player-points">${ranking[i].points}</div>
+  //           </div>`;
+  //
+  //   $playersEnd.append(playerElement);
+  //
+  //   let $piece = $("#players-end").find("." + ranking[i].player);
+  //   adjustNameFontSize($piece, ranking[i].name);
+  // }
 
-    $playersEnd.append(playerElement);
+  $playersEnd[0].innerHTML = data.joinedPlayersHTML;
+  $playersEnd.find(`#${gameMaster}`).find('.crown').addClass('hidden');
 
-    let $piece = $("#players-end").find("." + ranking[i].player);
-    adjustNameFontSize($piece, ranking[i].name);
+  setTimeout(() => {
+    rankingAnimations(ranking);
+  }, 500);
+
+  // if (!muted) {
+  //   successJingle.play();
+  // }
+}
+
+function rankingAnimations(rankingArr) {
+
+  let $playersEnd = $("#players-end");
+  let maxScore = rankingArr[0].points;
+  console.log('highest score:', maxScore);
+
+  let maxFallHeight = "40"; //30vh or vw drop height
+  // fallHeight = (1 - score/maxScore) * maxFallHeight
+
+  for (let i = 0; i < rankingArr.length; i++) {
+    let $playerPiece = $playersEnd.find(`#${rankingArr[i].player}`);
+    let score = rankingArr[i].points;
+    let fallHeight = (1 - score/maxScore) * maxFallHeight;
+    // console.log(`${rankingArr[i].player} falls ${fallHeight}vw!`);
+
+    $playerPiece.css({
+      transform: `translateY(${fallHeight}vw)`
+    });
+
+    if (score == maxScore) {
+      setTimeout(() => {
+        $playerPiece.addClass('winner');
+      }, 1000);
+    }
   }
-  if (!muted) {
-    successJingle.play();
-  }
+
+  setTimeout(() => {
+    if (!muted) {
+      successJingle.play();
+    }
+  }, 1000);
 }
 
 function newGameMaster(data) {
