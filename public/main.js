@@ -256,8 +256,7 @@ let moveY;
 
 let moveXvw;
 let moveYvw;
-// let ignoreX = 0;
-// let ignoreY = 0;
+
 let translateX;
 let translateY;
 
