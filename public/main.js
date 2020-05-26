@@ -1199,14 +1199,16 @@ function objectsAreMoving(data) {
 function objectIsDropped(data) {
   // other player drops object.
   if (!itsMyTurn) {
+    let $droppedObject = $('#objects').find(`.img-box.${data.clickedImgId}`);
+    
     if (data.selected) {
       // bring recently dropped objects to the front:
-      pullToFront($(`.img-box.${data.clickedImgId}`));
-      $(`.img-box.${data.clickedImgId}`).addClass("selected");
+      pullToFront($droppedObject);
+      $droppedObject.addClass("selected");
     } else {
       // reset object position:
-      $(`.img-box.${data.clickedImgId}`).removeClass("selected");
-      $(`.img-box.${data.clickedImgId}`).css({
+      $droppedObject.removeClass("selected");
+      $droppedObject.css({
         transform: `translate(${0}px, ${0}px)`,
         "z-index": 1
       });
