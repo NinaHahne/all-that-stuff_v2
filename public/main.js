@@ -1185,14 +1185,15 @@ function objectsAreMoving(data) {
   // other player moves an object.
   if (!itsMyTurn) {
     // $objects[0].innerHTML = data.activeObjects;
+    let $movedObject = $('#objects').find(`.img-box.${data.clickedImgId}`);
 
     // move or rotate object:
-    $(`.img-box.${data.clickedImgId}`).css({
+    $movedObject.css({
       transform: `translate(${data.moveXvw}vw, ${data.moveYvw}vw) rotate(${data.transformRotate}deg)`
     });
 
     // bring recently moved objects to the front:
-    pullToFront($(`.img-box.${data.clickedImgId}`));
+    pullToFront($movedObject);
   }
 }
 
@@ -1200,7 +1201,7 @@ function objectIsDropped(data) {
   // other player drops object.
   if (!itsMyTurn) {
     let $droppedObject = $('#objects').find(`.img-box.${data.clickedImgId}`);
-    
+
     if (data.selected) {
       // bring recently dropped objects to the front:
       pullToFront($droppedObject);
