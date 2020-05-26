@@ -295,12 +295,12 @@ playButton.addEventListener("click", function() {
   } else if (!selectedPieceId) {
     let msg = "please pick a color before you start the game.";
     window.alert(msg);
-    // do something prettier instead of the alert
+    // TODO: something prettier instead of the alert
   } else if (players.length < 3) {
     let msg =
       "minimum number of players is 3. \nwait for more players to join the game";
     window.alert(msg);
-    // do something prettier instead of the alert
+    // TODO: something prettier instead of the alert
   } else {
     startGame();
   }
@@ -309,16 +309,13 @@ playButton.addEventListener("click", function() {
 $("#start-menu").on("click", ".player", e => {
   // console.log('e.target: ', e.target);
   // console.log('e.currentTarget: ', e.currentTarget);
-  // console.log('clicked select players');
   if ($(e.target).hasClass("selectedPlayerPiece")) {
     console.log("clicked element is already taken!");
   }
   // if you haven't yet selected a piece and it's not taken by another player:
-  // console.log("your selectedPieceId before clicking: ", selectedPieceId);
   if (!selectedPieceId && !$(e.target).hasClass("selectedPlayerPiece")) {
     let pieceId = $(e.target).attr("id");
-    // console.log('$(e.target).attr("id") l269: ', $(e.target).attr("id"));
-    // console.log("selectedPieceId l271: ", selectedPieceId);
+
     selectedPiece(pieceId);
   }
 });
@@ -334,14 +331,9 @@ window.addEventListener("resize", () => {
   [borderTop, borderBottom, borderLeft, borderRight] = get$objBorders(
     $constructionArea
   );
-  let oldViewportWidth = viewportWidth;
-  // console.log('oldViewportWidth:', oldViewportWidth);
-  viewportWidth = window.innerWidth;
-  // console.log('new viewportWidth:', viewportWidth);
 
-  // let viewPortChangeRatio = viewportWidth / oldViewportWidth;
-  // console.log('viewPortChangeRatio:', viewPortChangeRatio);
-  let activeObjects = $("#objects")[0].innerHTML;
+  viewportWidth = window.innerWidth;
+
   adjustObjectPositions(viewportWidth);
 });
 
@@ -589,6 +581,8 @@ function preloadObjectImages() {
   });
 }
 
+// TODO: also preload the object specific sounds
+
 //based on Fisher–Yates shuffle //By Alexey Lebedev :
 function shuffleObjects(objects) {
   for (let i = objects.children.length; i >= 0; i--) {
@@ -600,16 +594,16 @@ function shuffleObjects(objects) {
 function moveTickerObjects() {
   // left = left - 2;
   // left--;
-  left = left - 0.07; // trying moving in vw units
+  left = left - 0.07; // moving in vw units
   // console.log(left);
   let vwPositionOfFirstObject = (objectList[0].offsetWidth * 100) / viewportWidth;
   if (left < -vwPositionOfFirstObject) {
-    //true when first link is off screen..
-    // add to left the width of the currently first link
+    //true when first object is off screen..
+    // add to left the width of the currently first object
     let widthOfFirstObject = vwPositionOfFirstObject; //use clientWidth instead?
     // console.log(widthOfFirstObject);
     left += widthOfFirstObject;
-    // make first link the last link
+    // make first object the last object:
     objects.appendChild(objectList[0]); //appending will actually remove it from the start and add it to the end
   }
   myReq = requestAnimationFrame(moveTickerObjects); //like setTimeout, but the waiting time is adjusted to the framerate of used hardware(?)
@@ -717,16 +711,6 @@ function addPlayer(data) {
       let $waitingMsg = $("#logo-button-box").find(".waiting-msg");
       $waitingMsg.removeClass("hidden");
     }
-
-    // console.log('$piece[0].innerText: ', $piece[0].innerText);
-    // console.log("$playerName: ", $playerName);
-
-    // inconsistent ERR: Cannot set property 'innerText' of undefined:
-
-    // $playerName[0].innerText = "you";
-    // console.log('.player-name in $piece: ', $playerName[0]);
-  } else {
-    // $playerName[0].innerText = "";
   }
 }
 
@@ -856,14 +840,15 @@ function addPlayerMidGame(data) {
 }
 
 function removePlayer(pieceId) {
-  // only if the disconnected player had chosen a piece and it's not "":
+  // only if the disconnected player had chosen a piece:
   if (pieceId) {
     let $piece = $("#" + pieceId);
     // console.log('$piece: ', $piece);
+
     $piece.removeClass("selectedPlayerPiece");
+    // this will change the font color (to white) and border style (to dashed) of the player who left.
 
     players = players.filter(item => item !== pieceId);
-    // sessionStorage.setItem("players", players);
   }
 }
 
@@ -887,7 +872,7 @@ function startGame() {
     queuedObjects: queuedObjectsHTML
   });
 
-  getObjectPositions();
+  setObjectPositionsAbsolute();
 }
 
 function gameHasBeenStarted(data) {
@@ -896,7 +881,7 @@ function gameHasBeenStarted(data) {
     cancelAnimationFrame(myReq);
     $objects[0].innerHTML = data.activeObjects;
     $queue[0].innerHTML = data.queuedObjects;
-    getObjectPositions();
+    setObjectPositionsAbsolute();
   }
   doneBtnPressed = false;
 
@@ -946,15 +931,6 @@ function gameHasBeenStarted(data) {
 
     $("#done-btn").removeClass("hidden");
   }
-  // delete "?" from other player names: // from old game version without player names..
-  // let $pieces = $("#joined-players").find(".player");
-  // let $otherPlayerNames = $pieces.find(".player-name");
-  // for (let i = 0; i < $otherPlayerNames.length; i++) {
-  //   // console.log($otherPlayerNames[i].innerText);
-  //   if ($otherPlayerNames[i].innerText == "?") {
-  //     $otherPlayerNames[i].innerText = "";
-  //   }
-  // }
 
   // first word card:
   cardTitle[0].innerHTML = data.firstCard.title;
@@ -999,7 +975,7 @@ function get$objBorders($obj) {
   return [top, bottom, left, right];
 }
 
-function getObjectPositions() {
+function setObjectPositionsAbsolute() {
   $objects.children(".img-box").each(function() {
     // position() gives position relative to positioned parent
     let objTop = $(this).position().top;
@@ -1016,7 +992,29 @@ function getObjectPositions() {
   });
 }
 
-// TODO: refactor this function to use the more simple way to grab the current transform props like in adjustSelectedObjectPositions():
+function getTransformProps($element) {
+  const transformProps = $element.css("transform");
+  var tValues = transformProps.split("(")[1],
+    tValues = tValues.split(")")[0],
+    tValues = tValues.split(",");
+
+    // get the transform/translate properties:
+  let translateX = Number(tValues[4]);
+  let translateY = Number(tValues[5]);
+
+  //  https://css-tricks.com/get-value-of-css-rotation-through-javascript/
+  // get the transform/rotate properties:
+  let a = Number(tValues[0]);
+  let b = Number(tValues[1]);
+  // let c= Number(values[2]);
+  // let d= Number(values[3]);
+  // console.log('a: ', a, 'b: ', b, 'c: ', c, 'd: ', d);
+
+  let rotate = Math.round(Math.atan2(b, a) * (180 / Math.PI));
+
+  return [translateX, translateY, rotate];
+}
+
 function adjustObjectPositions(currentViewPortWidth) {
   // safe transform values of selected objects:
   let savedTransformProps = {};
@@ -1030,9 +1028,6 @@ function adjustObjectPositions(currentViewPortWidth) {
     let translateXvw = (translateXpx * 100) / currentViewPortWidth;
     let translateYvw = (translateYpx * 100) / currentViewPortWidth;
 
-    // let translateXvw = ((translateXpx * 100) / oldViewportWidth) * viewPortChangeRatio;
-    // let translateYvw = ((translateYpx * 100) / oldViewportWidth) * viewPortChangeRatio;
-
     savedTransformProps[imgId] = [translateXvw, translateYvw, rotate];
     // console.log('savedTransformProps of', imgId, ':', savedTransformProps[imgId]);
   });
@@ -1042,11 +1037,11 @@ function adjustObjectPositions(currentViewPortWidth) {
     transform: `translate(${0}vw, ${0}vw) rotate(${0}deg)`
   });
 
-  // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with getObjectPositions():
+  // unset absolute position of objects to make them readjust to new objects container size and then go back to position absolute with setObjectPositionsAbsolute():
   $objects.children(".img-box").css({
     position: "unset"
   });
-  getObjectPositions();
+  setObjectPositionsAbsolute();
 
   // get saved transform props back for selected objects:
   $objects.find(".selected").each(function() {
@@ -1059,17 +1054,19 @@ function adjustObjectPositions(currentViewPortWidth) {
 }
 
 function adjustSelectedObjectPositions(usedObjects, buildersViewportWidth) {
+  // NOTE: I can't use getTransformProps(); here because it only gets
+  // the transform props of a RENDERED HTML ELEMENT.
+  // but here I use an unrendered HTML element just to get the transformProps
+  // from the selected objects the builder used
+
   let usedObjectsDiv = document.createElement("div");
   usedObjectsDiv.innerHTML = usedObjects;
   let $selectedObjects = $(usedObjectsDiv).find('.selected');
   // console.log('$selectedObjects:', $selectedObjects);
 
-  // recalculate position/transform props of all selected objects:
+  // get transform props of all selected objects:
   $selectedObjects.each(function() {
     let imgId = $(this).find('img').attr('id');
-
-    // let [translateX, translateY, rotate] = getTransformProps($(this));
-    // NOTE: I can't use getTransformProps(); here because it only gets the transform props of a RENDERED HTML ELEMENT. but here I use an unrendered HTML element
 
     let transformProps = $(this).css("transform");
     // looks like: translate(-303px, -291px) rotate(0deg)
@@ -1084,6 +1081,7 @@ function adjustSelectedObjectPositions(usedObjects, buildersViewportWidth) {
     let translateXpx = Number(translateProps[0].split('px')[0]);
     let translateYpx = Number(translateProps[1].split('px')[0]);
 
+    // recalculate translate props for other players using relative vw units:
     let translateXvw = (translateXpx * 100) / buildersViewportWidth;
     let translateYvw = (translateYpx * 100) / buildersViewportWidth;
 
@@ -1114,7 +1112,7 @@ function toggleHelp() {
   }
 }
 
-// drag&drop objects in main game:
+// drag&drop objects:
 function updatePosition(e) {
   // it's my turn and I'm moving an object.
   objectMoved = true;
@@ -1353,29 +1351,6 @@ function buildingIsDone(data) {
   doneBtnPressed = true;
 }
 
-function getTransformProps($element) {
-  const transformProps = $element.css("transform");
-  var tValues = transformProps.split("(")[1],
-    tValues = tValues.split(")")[0],
-    tValues = tValues.split(",");
-
-    // get the transform/translate properties:
-  let translateX = Number(tValues[4]);
-  let translateY = Number(tValues[5]);
-
-  //  https://css-tricks.com/get-value-of-css-rotation-through-javascript/
-  // get the transform/rotate properties:
-  let a = Number(tValues[0]);
-  let b = Number(tValues[1]);
-  // let c= Number(values[2]);
-  // let d= Number(values[3]);
-  // console.log('a: ', a, 'b: ', b, 'c: ', c, 'd: ', d);
-
-  let rotate = Math.round(Math.atan2(b, a) * (180 / Math.PI));
-
-  return [translateX, translateY, rotate];
-}
-
 function guessWordFromCard(e) {
   if (!myGuess & doneBtnPressed) {
     myGuess = e.currentTarget.getAttribute("key");
@@ -1528,7 +1503,7 @@ function discardAndRefillObjects() {
     joinedPlayersHTML: joinedPlayersHTML
   });
 
-  getObjectPositions();
+  setObjectPositionsAbsolute();
 }
 
 function resetObjectImage($selectedObject) {
@@ -1576,7 +1551,7 @@ function changeTurn(data) {
     $objects[0].innerHTML = data.activeObjects;
     $queue[0].innerHTML = data.queuedObjects;
 
-    getObjectPositions();
+    setObjectPositionsAbsolute();
   }
 
   // new word card:
@@ -1660,7 +1635,8 @@ function rankingAnimations(rankingArr) {
   let maxScore = rankingArr[0].points;
   console.log('highest score:', maxScore);
 
-  let maxFallHeight = "40"; //30vh or vw drop height
+  //40 vw maximum drop height:
+  let maxFallHeight = "40";
   // fallHeight = (1 - score/maxScore) * maxFallHeight
 
   for (let i = 0; i < rankingArr.length; i++) {

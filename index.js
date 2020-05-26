@@ -270,7 +270,7 @@ function getWinner() {
   selectedPieces = [];
   gameStarted = false;
 
-  // console.log("game over!");
+  console.log("game over!");
   io.sockets.emit("game ends", {
     joinedPlayersHTML: joinedPlayersHTML,
     rankingArray: ranking
