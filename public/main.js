@@ -193,12 +193,12 @@ const objObj = [
     sound: "157539__nenadsimic__click.wav"
   }
 ];
-const objects = document.getElementById("ticker-objects");
-let objectList = objects.getElementsByClassName("img-box"); //objectList[0] is always the first link in the list.. list stays in sync
+const tickerObjects = document.getElementById("ticker-objects");
+let objectList = tickerObjects.getElementsByClassName("img-box"); //objectList[0] is always the first link in the list.. list stays in sync
 
-// let left = objects.offsetLeft; //number (in px), x-position of element relative to its parent
+// let left = tickerObjects.offsetLeft; //number (in px), x-position of element relative to its parent
 // transform px units in vw units:
-let left = (objects.offsetLeft * 100) / viewportWidth;
+let left = (tickerObjects.offsetLeft * 100) / viewportWidth;
 
 let myReq;
 
@@ -279,7 +279,7 @@ let muted = false;
 
 // §§ PREPARATION ************************************************
 
-shuffleObjects(objects);
+shuffleObjects(tickerObjects);
 moveTickerObjects();
 preloadObjectImages();
 
@@ -603,11 +603,11 @@ function moveTickerObjects() {
     // console.log(widthOfFirstObject);
     left += widthOfFirstObject;
     // make first object the last object:
-    objects.appendChild(objectList[0]); //appending will actually remove it from the start and add it to the end
+    tickerObjects.appendChild(objectList[0]); //appending will actually remove it from the start and add it to the end
   }
   myReq = requestAnimationFrame(moveTickerObjects); //like setTimeout, but the waiting time is adjusted to the framerate of used hardware(?)
-  // objects.style.left = left + "px";
-  objects.style.left = left + "vw";
+  // tickerObjects.style.left = left + "px";
+  tickerObjects.style.left = left + "vw";
 }
 
 function changeLanguage() {
@@ -1636,15 +1636,17 @@ function rankingAnimations(rankingArr) {
   let $playersEnd = $("#players-end");
   let maxScore = rankingArr[0].points;
   console.log('highest score:', maxScore);
+  let lowestScore = rankingArr[rankingArr.length - 1].points;
+  let scoreRange = maxScore - lowestScore;
 
-  //40 vw maximum drop height:
-  let maxFallHeight = "40";
-  // fallHeight = (1 - score/maxScore) * maxFallHeight
+  // 38 vw maximum drop height:
+  let maxFallHeight = "38";
 
   for (let i = 0; i < rankingArr.length; i++) {
     let $playerPiece = $playersEnd.find(`#${rankingArr[i].player}`);
     let score = rankingArr[i].points;
-    let fallHeight = (1 - score/maxScore) * maxFallHeight;
+    // let fallHeight = (1 - score/maxScore) * maxFallHeight;
+    let fallHeight = (1 - score/scoreRange) * maxFallHeight;
     // console.log(`${rankingArr[i].player} falls ${fallHeight}vw!`);
 
     $playerPiece.css({
