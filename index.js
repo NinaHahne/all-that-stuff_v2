@@ -12,8 +12,6 @@ const io = require("socket.io")(server, {
 // cards:
 const cardsEN = require("./cards_enUS.json");
 const cardsDE = require("./cards_de.json");
-let cards = cardsEN;
-let chosenLanguage = "english";
 
 app.use(express.static("./public"));
 
@@ -37,6 +35,9 @@ let numberOfTurnsForThisGame;
 let numberOfTurnsLeft;
 
 // card deck: ----------------------
+let cards = cardsEN;
+let chosenLanguage = "english";
+
 let stuffCards = [];
 let discardPile = [];
 let firstCard;
