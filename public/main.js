@@ -1637,7 +1637,6 @@ function rankingAnimations(rankingArr) {
   let maxScore = rankingArr[0].points;
   console.log('highest score:', maxScore);
   let lowestScore = rankingArr[rankingArr.length - 1].points;
-  let scoreRange = maxScore - lowestScore;
 
   // 38 vw maximum drop height:
   let maxFallHeight = "38";
@@ -1646,7 +1645,7 @@ function rankingAnimations(rankingArr) {
     let $playerPiece = $playersEnd.find(`#${rankingArr[i].player}`);
     let score = rankingArr[i].points;
     // let fallHeight = (1 - score/maxScore) * maxFallHeight;
-    let fallHeight = (1 - score/scoreRange) * maxFallHeight;
+    let fallHeight = (1 - (score - lowestScore)/(maxScore - lowestScore)) * maxFallHeight;
     // console.log(`${rankingArr[i].player} falls ${fallHeight}vw!`);
 
     $playerPiece.css({
