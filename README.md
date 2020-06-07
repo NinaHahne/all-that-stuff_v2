@@ -27,8 +27,3 @@ NEXT TURN:
 ### GAME END
 
 <img src="./public/preview/game-end.gif" alt="game end preview animation">
-
-## Links & more
-* look at the [word cards](http://www.allthatstuff.fun/cards)
-
-* [cards json file](http://www.allthatstuff.fun/cards_enUS.json)
