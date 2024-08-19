@@ -1,6 +1,6 @@
 # AllThatStuff
 Multiplayer word association game
-(Version 2 --> see [Version 3](https://github.com/NinaHahne/AllThatStuff_v3))
+(Version 2 --> see [Version 3](https://github.com/NinaHahne/all-that-stuff_v3))
 
 ## Features
 * Players take turns
